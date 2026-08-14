@@ -1,2 +1,3 @@
-# Voice module: STT, TTS, wake word
-# Coming soon
+from .tts import TextToSpeech
+
+__all__ = ["TextToSpeech"]

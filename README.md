@@ -1,71 +1,63 @@
 # Jarvis AI Assistant
 
-A personal voice-controlled AI assistant inspired by Iron Man's J.A.R.V.I.S.
+A personal voice-controlled AI assistant inspired by Iron Man's J.A.R.V.I.S.  
+Built in **Python**.
 
-## Features (planned / in progress)
+## Current Features
+- Text chat with LLM (OpenAI / Anthropic / Gemini)
+- **Text-to-Speech** — Jarvis speaks his replies (using pyttsx3)
+- Conversation history
+- Configurable system prompt and personality
+
+## Coming Next
+- Speech-to-Text (microphone input)
 - Wake word detection ("Hey Jarvis")
-- Speech-to-text & text-to-speech
-- LLM brain (OpenAI / Claude / Gemini / local Ollama)
-- Tool use (web search, system control, calendar, etc.)
-- Conversation memory
-- Optional HUD-style UI
+- Tool calling (web search, open apps, etc.)
+- Persistent memory
+- Optional web UI / HUD
 
 ## Quick Start
 
-1. Clone the repo
 ```bash
 git clone https://github.com/Hirunthakan432/jarvis-ai-assistant.git
 cd jarvis-ai-assistant
-```
 
-2. Create a virtual environment
-```bash
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-```
+source venv/bin/activate          # Windows: venv\Scripts\activate
 
-3. Install dependencies
-```bash
 pip install -r requirements.txt
-```
 
-4. Set up environment variables
-```bash
 cp .env.example .env
-# Edit .env and add your API keys
-```
+# Edit .env and add at least one API key (OPENAI_API_KEY recommended)
 
-5. Run
-```bash
 python main.py
 ```
 
 ## Project Structure
 ```
 jarvis-ai-assistant/
-── main.py              # Entry point
-── config.py            # Configuration & API keys
-── assistant.py         # Core assistant logic
-── voice/               # STT, TTS, wake word
-── tools/               # Action tools
-── memory/              # Conversation memory
-── requirements.txt
-── .env.example
-── README.md
+├── main.py              # Entry point
+├── config.py            # Configuration & API keys
+├── assistant.py         # Core LLM logic
+├── voice/
+│   ├── __init__.py
+│   └── tts.py           # Text-to-Speech
+├── tools/               # (coming soon)
+├── memory/              # (coming soon)
+├── requirements.txt
+├── .env.example
+└── README.md
 ```
 
 ## Requirements
 - Python 3.10+
-- Microphone & speakers
-- API keys (OpenAI, Anthropic, Google Gemini, or local Ollama)
+- Microphone & speakers (for future voice input)
+- At least one LLM API key
 
-## Roadmap
-- [x] Project scaffolding
-- [ ] Basic text chat loop
-- [ ] Text-to-speech
-- [ ] Speech-to-text + wake word
-- [ ] Tool calling
-- [ ] Persistent memory
-- [ ] Simple web UI
+## Notes
+- `pyttsx3` works offline and is cross-platform.
+- On Linux you may need `espeak` or `festival` installed for TTS.
+- On macOS it uses the built-in voices.
+- On Windows it uses SAPI5 voices.
 
-Built with ❤️ using modern LLMs and open-source voice tools.
+Built with ❤️ in Python.
