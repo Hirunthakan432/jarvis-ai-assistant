@@ -5,17 +5,17 @@ Built in **Python**.
 
 ## Current Features
 - Text chat with LLM (OpenAI / Anthropic / Gemini)
-- **Text-to-Speech** — Jarvis speaks his replies (pyttsx3)
-- **Speech-to-Text** — Talk to Jarvis with your microphone
-- Hybrid mode: press Enter to speak, or type normally
+- **Text-to-Speech** — Jarvis speaks replies (pyttsx3)
+- **Speech-to-Text** — Talk with your microphone
+- **Wake Word** — Say "Jarvis" to activate (Porcupine)
+- Hybrid mode still available (type or press Enter)
 - Conversation history
-- Configurable system prompt and personality
 
 ## Coming Next
-- Wake word detection ("Hey Jarvis")
 - Tool calling (web search, open apps, system control)
 - Persistent memory
 - Optional web UI / HUD
+- Offline STT (Whisper)
 
 ## Quick Start
 
@@ -29,26 +29,37 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# Edit .env and add at least one API key (OPENAI_API_KEY recommended)
+```
 
+### Required setup in `.env`
+1. Add at least one LLM key (e.g. `OPENAI_API_KEY=...`)
+2. **For wake word** (recommended):
+   - Go to https://console.picovoice.ai/
+   - Create a free account and get an Access Key
+   - Add it: `PORCUPINE_ACCESS_KEY=your_key_here`
+
+Then run:
+```bash
 python main.py
 ```
 
-### How to interact
-- Press **Enter** (empty line) → Jarvis listens to your microphone
-- Type a message + Enter → normal text mode
-- Type `quit` / `exit` / `bye` → shut down
+### How to use
+- **With wake word**: Just say **"Jarvis"** → he replies "Yes?" → then speak your command
+- Press **Enter** → listen immediately (no wake word needed)
+- Type a message + Enter → text mode
+- Say or type `quit` / `exit` / `bye` → shut down
 
 ## Project Structure
 ```
 jarvis-ai-assistant/
-├── main.py              # Entry point (hybrid voice + text)
-├── config.py            # Configuration & API keys
-├── assistant.py         # Core LLM logic
+├── main.py
+├── config.py
+├── assistant.py
 ├── voice/
 │   ├── __init__.py
 │   ├── tts.py           # Text-to-Speech
-│   └── stt.py           # Speech-to-Text
+│   ├── stt.py           # Speech-to-Text
+│   └── wakeword.py      # Wake word (Porcupine)
 ├── tools/               # (coming soon)
 ├── memory/              # (coming soon)
 ├── requirements.txt
@@ -56,21 +67,10 @@ jarvis-ai-assistant/
 └── README.md
 ```
 
-## Requirements
-- Python 3.10+
-- Working microphone & speakers
-- At least one LLM API key
-
-### Platform notes for microphone
-- **Windows / macOS**: Usually works out of the box
-- **Linux**: You may need `portaudio`:
-  ```bash
-  sudo apt install portaudio19-dev python3-pyaudio   # Debian/Ubuntu
-  ```
-
 ## Notes
-- Speech recognition currently uses Google’s free Web Speech API (no key required).
-- For fully offline STT later we can switch to Whisper.
-- `pyttsx3` works offline.
+- Wake word uses Picovoice Porcupine (very accurate & low resource).
+- Free tier is more than enough for personal use.
+- If no Porcupine key is provided, the assistant falls back to manual mode.
+- On Linux you may need: `sudo apt install portaudio19-dev`
 
 Built with ❤️ in Python.

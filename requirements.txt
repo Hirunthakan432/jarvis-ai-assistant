@@ -8,6 +8,7 @@ google-generativeai>=0.8.0
 speechrecognition>=3.10.0
 pyttsx3>=2.90
 pvporcupine>=3.0.0
+pvrecorder>=1.2.0
 pyaudio>=0.2.14
 # Optional better TTS: edge-tts, elevenlabs, piper-tts
 
