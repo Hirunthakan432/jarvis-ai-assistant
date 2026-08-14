@@ -5,14 +5,15 @@ Built in **Python**.
 
 ## Current Features
 - Text chat with LLM (OpenAI / Anthropic / Gemini)
-- **Text-to-Speech** — Jarvis speaks his replies (using pyttsx3)
+- **Text-to-Speech** — Jarvis speaks his replies (pyttsx3)
+- **Speech-to-Text** — Talk to Jarvis with your microphone
+- Hybrid mode: press Enter to speak, or type normally
 - Conversation history
 - Configurable system prompt and personality
 
 ## Coming Next
-- Speech-to-Text (microphone input)
 - Wake word detection ("Hey Jarvis")
-- Tool calling (web search, open apps, etc.)
+- Tool calling (web search, open apps, system control)
 - Persistent memory
 - Optional web UI / HUD
 
@@ -33,15 +34,21 @@ cp .env.example .env
 python main.py
 ```
 
+### How to interact
+- Press **Enter** (empty line) → Jarvis listens to your microphone
+- Type a message + Enter → normal text mode
+- Type `quit` / `exit` / `bye` → shut down
+
 ## Project Structure
 ```
 jarvis-ai-assistant/
-├── main.py              # Entry point
+├── main.py              # Entry point (hybrid voice + text)
 ├── config.py            # Configuration & API keys
 ├── assistant.py         # Core LLM logic
 ├── voice/
 │   ├── __init__.py
-│   └── tts.py           # Text-to-Speech
+│   ├── tts.py           # Text-to-Speech
+│   └── stt.py           # Speech-to-Text
 ├── tools/               # (coming soon)
 ├── memory/              # (coming soon)
 ├── requirements.txt
@@ -51,13 +58,19 @@ jarvis-ai-assistant/
 
 ## Requirements
 - Python 3.10+
-- Microphone & speakers (for future voice input)
+- Working microphone & speakers
 - At least one LLM API key
 
+### Platform notes for microphone
+- **Windows / macOS**: Usually works out of the box
+- **Linux**: You may need `portaudio`:
+  ```bash
+  sudo apt install portaudio19-dev python3-pyaudio   # Debian/Ubuntu
+  ```
+
 ## Notes
-- `pyttsx3` works offline and is cross-platform.
-- On Linux you may need `espeak` or `festival` installed for TTS.
-- On macOS it uses the built-in voices.
-- On Windows it uses SAPI5 voices.
+- Speech recognition currently uses Google’s free Web Speech API (no key required).
+- For fully offline STT later we can switch to Whisper.
+- `pyttsx3` works offline.
 
 Built with ❤️ in Python.
