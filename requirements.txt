@@ -12,6 +12,9 @@ pvrecorder>=1.2.0
 pyaudio>=0.2.14
 # Optional better TTS: edge-tts, elevenlabs, piper-tts
 
+# GUI
+customtkinter>=5.2.0
+
 # Tools & agents
 langchain>=0.3.0
 langchain-openai>=0.2.0

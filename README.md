@@ -1,24 +1,19 @@
 # Jarvis AI Assistant
 
 A personal voice-controlled AI assistant inspired by Iron Man's J.A.R.V.I.S.  
-Built in **Python**.
+Built in **Python** with a modern dark GUI.
 
 ## Current Features
+- **Modern GUI** (CustomTkinter) – dark theme, chat bubbles, status indicator
 - Text chat with LLM (OpenAI / Anthropic / Gemini)
-- **Text-to-Speech** — Jarvis speaks replies (pyttsx3)
-- **Speech-to-Text** — Talk with your microphone
-- **Wake Word** — Say "Jarvis" to activate (Porcupine)
-- Hybrid mode still available (type or press Enter)
-- Conversation history
+- Text-to-Speech — Jarvis speaks replies
+- Speech-to-Text — microphone input from the GUI
+- Wake word support (CLI mode)
+- Conversation history + Clear chat
 
-## Coming Next
-- Tool calling (web search, open apps, system control)
-- Persistent memory
-- Optional web UI / HUD
-- Offline STT (Whisper)
+## How to Run
 
-## Quick Start
-
+### 1. Install
 ```bash
 git clone https://github.com/Hirunthakan432/jarvis-ai-assistant.git
 cd jarvis-ai-assistant
@@ -29,48 +24,54 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 cp .env.example .env
+# Add your OPENAI_API_KEY (or other provider) in .env
 ```
 
-### Required setup in `.env`
-1. Add at least one LLM key (e.g. `OPENAI_API_KEY=...`)
-2. **For wake word** (recommended):
-   - Go to https://console.picovoice.ai/
-   - Create a free account and get an Access Key
-   - Add it: `PORCUPINE_ACCESS_KEY=your_key_here`
+### 2. Launch the GUI (recommended)
+```bash
+python gui.py
+```
 
-Then run:
+### 3. Or launch the classic CLI + wake word version
 ```bash
 python main.py
 ```
 
-### How to use
-- **With wake word**: Just say **"Jarvis"** → he replies "Yes?" → then speak your command
-- Press **Enter** → listen immediately (no wake word needed)
-- Type a message + Enter → text mode
-- Say or type `quit` / `exit` / `bye` → shut down
+## GUI Controls
+| Control       | Action                          |
+|---------------|---------------------------------|
+| Type + Enter / Send | Send text message          |
+| 🎤 Mic button  | Speak a command                 |
+| Clear Chat    | Reset conversation history      |
+
+Status colors:
+- Green → Online
+- Red → Listening
+- Orange → Thinking
+- Blue → Speaking
 
 ## Project Structure
 ```
 jarvis-ai-assistant/
-├── main.py
+├── gui.py               # ⭐ Modern graphical interface
+├── main.py              # CLI + wake word version
 ├── config.py
 ├── assistant.py
 ├── voice/
-│   ├── __init__.py
-│   ├── tts.py           # Text-to-Speech
-│   ├── stt.py           # Speech-to-Text
-│   └── wakeword.py      # Wake word (Porcupine)
-├── tools/               # (coming soon)
-├── memory/              # (coming soon)
+│   ├── tts.py
+│   ├── stt.py
+│   └── wakeword.py
+├── tools/
+├── memory/
 ├── requirements.txt
 ├── .env.example
 └── README.md
 ```
 
-## Notes
-- Wake word uses Picovoice Porcupine (very accurate & low resource).
-- Free tier is more than enough for personal use.
-- If no Porcupine key is provided, the assistant falls back to manual mode.
-- On Linux you may need: `sudo apt install portaudio19-dev`
+## Coming Next
+- Tool calling (web search, open apps, etc.)
+- Persistent memory
+- Better voice (edge-tts / ElevenLabs)
+- Optional wake-word integration inside the GUI
 
 Built with ❤️ in Python.
