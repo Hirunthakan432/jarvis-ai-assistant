@@ -1,0 +1,4 @@
+# Minimal text mode: python main.py --text
+python-dotenv>=1.0.0
+openai>=1.40.0
+# For Anthropic or Gemini, also install their package from requirements.txt.

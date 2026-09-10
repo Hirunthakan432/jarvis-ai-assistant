@@ -1,26 +1,30 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+ASSISTANT_NAME = os.getenv('ASSISTANT_NAME', 'Jarvis')
+DEFAULT_LLM = os.getenv('DEFAULT_LLM', 'openai').strip().lower()
+MODEL_DEFAULTS = {'openai': 'gpt-4o-mini', 'anthropic': 'claude-sonnet-4-20250514',
+                  'gemini': 'gemini-2.5-flash', 'ollama': 'llama3.2:3b'}
+DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', '').strip() or MODEL_DEFAULTS.get(DEFAULT_LLM, '')
 
-# Assistant identity
-ASSISTANT_NAME = os.getenv("ASSISTANT_NAME", "Jarvis")
+def api_key(name):
+    value = os.getenv(name, '').strip()
+    return value if value and not value.endswith('...') else None
 
-# LLM settings
-DEFAULT_LLM = os.getenv("DEFAULT_LLM", "openai")  # openai | anthropic | gemini | ollama
-DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-4o-mini")
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
-# Voice
-PORCUPINE_ACCESS_KEY = os.getenv("PORCUPINE_ACCESS_KEY")
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-
-# System prompt
-SYSTEM_PROMPT = f"""You are {ASSISTANT_NAME}, a highly capable personal AI assistant inspired by Iron Man's J.A.R.V.I.S.
-You are helpful, concise, witty when appropriate, and proactive.
-You have access to tools and can control systems, search the web, and manage tasks.
-Always confirm before performing irreversible actions.
-"""
+OPENAI_API_KEY = api_key('OPENAI_API_KEY')
+ANTHROPIC_API_KEY = api_key('ANTHROPIC_API_KEY')
+GOOGLE_API_KEY = api_key('GOOGLE_API_KEY')
+PORCUPINE_ACCESS_KEY = api_key('PORCUPINE_ACCESS_KEY')
+ELEVENLABS_API_KEY = api_key('ELEVENLABS_API_KEY')
+OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434/v1')
+MEMORY_PATH = os.getenv('JARVIS_MEMORY_PATH', str(Path.home() / '.jarvis' / 'memory.sqlite3'))
+MAX_HISTORY_TURNS = max(1, int(os.getenv('MAX_HISTORY_TURNS', '20')))
+MAX_MESSAGE_CHARS = max(1, int(os.getenv('MAX_MESSAGE_CHARS', '12000')))
+SYSTEM_PROMPT = f'''You are {ASSISTANT_NAME}, a helpful personal AI assistant.
+Be clear, concise, and honest about uncertainty. Help with studying, programming, and everyday questions.
+The app supports explicit local commands: /help, /time, /calc, /task add, /task done, /tasks, /status, /clear.
+You cannot execute these commands yourself. Ask the user to enter a command when appropriate.
+You do not have live web browsing, app control, or shell access. Never claim to have performed an action.
+'''

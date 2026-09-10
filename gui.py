@@ -29,9 +29,15 @@ class JarvisGUI(ctk.CTk):
 
         self.is_listening = False
         self.is_speaking = False
+        self.is_busy = False
 
         self._build_ui()
         self._set_status("Online")
+
+        # Restore persisted conversation in the interface.
+        for message in self.jarvis.history[1:]:
+            is_user = message['role'] == 'user'
+            self._add_message('You' if is_user else ASSISTANT_NAME, message['content'], is_user)
 
         # Greeting
         self.after(500, self._greet)
@@ -101,7 +107,7 @@ class JarvisGUI(ctk.CTk):
         bottom = ctk.CTkFrame(self, height=40, corner_radius=0, fg_color="transparent")
         bottom.pack(fill="x", padx=15, pady=(0, 10))
 
-        clear_btn = ctk.CTkButton(
+        self.clear_btn = ctk.CTkButton(
             bottom,
             text="Clear Chat",
             width=100,
@@ -111,11 +117,11 @@ class JarvisGUI(ctk.CTk):
             border_width=1,
             command=self._clear_chat,
         )
-        clear_btn.pack(side="left")
+        self.clear_btn.pack(side="left")
 
         info_label = ctk.CTkLabel(
             bottom,
-            text="Press 🎤 to speak  •  Enter to send",
+            text="Type /help for tools  •  Enter to send",
             font=ctk.CTkFont(size=12),
             text_color="gray",
         )
@@ -155,9 +161,11 @@ class JarvisGUI(ctk.CTk):
     def _greet(self):
         greeting = f"Hello. {ASSISTANT_NAME} is online and ready to assist you."
         self._add_message(ASSISTANT_NAME, greeting)
-        threading.Thread(target=self.tts.speak, args=(greeting,), daemon=True).start()
+
 
     def _on_send(self):
+        if self.is_busy or self.is_listening:
+            return
         text = self.entry.get().strip()
         if not text:
             return
@@ -166,7 +174,7 @@ class JarvisGUI(ctk.CTk):
         self._process_user_input(text)
 
     def _on_mic(self):
-        if self.is_listening or self.is_speaking:
+        if self.is_listening or self.is_speaking or self.is_busy:
             return
 
         self.is_listening = True
@@ -178,7 +186,7 @@ class JarvisGUI(ctk.CTk):
                 result = self.stt.listen()
                 self.after(0, lambda: self._after_listen(result))
             except Exception as e:
-                self.after(0, lambda: self._after_listen(None, str(e)))
+                self.after(0, lambda error=str(e): self._after_listen(None, error))
 
         threading.Thread(target=listen_thread, daemon=True).start()
 
@@ -198,6 +206,13 @@ class JarvisGUI(ctk.CTk):
         self._process_user_input(text)
 
     def _process_user_input(self, text: str):
+        if self.is_busy:
+            return
+        if text.strip().lower() == '/clear':
+            self._clear_chat()
+            return
+        self.is_busy = True
+        self.clear_btn.configure(state="disabled")
         self._add_message("You", text, is_user=True)
         self._set_status("Thinking...", "#ffab00")
         self.send_btn.configure(state="disabled")
@@ -208,7 +223,7 @@ class JarvisGUI(ctk.CTk):
                 response = self.jarvis.chat(text)
                 self.after(0, lambda: self._show_response(response))
             except Exception as e:
-                self.after(0, lambda: self._show_response(f"Error: {e}"))
+                self.after(0, lambda error=str(e): self._show_response(f"Error: {error}"))
 
         threading.Thread(target=think_thread, daemon=True).start()
 
@@ -226,12 +241,16 @@ class JarvisGUI(ctk.CTk):
         threading.Thread(target=speak_thread, daemon=True).start()
 
     def _after_speak(self):
+        self.is_busy = False
+        self.clear_btn.configure(state="normal")
         self.is_speaking = False
         self._set_status("Online")
         self.send_btn.configure(state="normal")
         self.mic_btn.configure(state="normal")
 
     def _clear_chat(self):
+        if self.is_busy or self.is_listening:
+            return
         for widget in self.chat_frame.winfo_children():
             widget.destroy()
         self.jarvis.reset()
