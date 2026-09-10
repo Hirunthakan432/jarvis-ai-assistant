@@ -1,0 +1,7 @@
+-r requirements-text.txt
+anthropic>=0.34.0
+google-genai>=1.0.0
+ddgs>=9.0.0
+pypdf>=5.0.0
+Pillow>=10.4.0
+requests>=2.32.0

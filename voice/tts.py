@@ -1,33 +1,102 @@
-"""
-Text-to-Speech module for Jarvis
-Uses pyttsx3 (offline) by default. Easy to extend later with edge-tts or ElevenLabs.
-"""
+"""Single-owner speech engine with queued sentences and interrupt support."""
+import queue
+import threading
+import time
 
-import pyttsx3
-from config import ASSISTANT_NAME
 
 class TextToSpeech:
-    def __init__(self, rate: int = 175, volume: float = 1.0):
-        self.engine = pyttsx3.init()
-        self.engine.setProperty("rate", rate)
-        self.engine.setProperty("volume", volume)
+    def __init__(self, rate=175, volume=1.0, language='en-US'):
+        self.rate, self.volume, self.language = rate, volume, language
+        self.queue = queue.Queue()
+        self.lock = threading.RLock()
+        self.cancel = threading.Event()
+        self.closed = threading.Event()
+        self.speaking = threading.Event()
+        self.error = None
+        self.worker = threading.Thread(target=self._run, daemon=True)
+        self.worker.start()
 
-        # Try to select a more natural voice if available
-        voices = self.engine.getProperty("voices")
-        for voice in voices:
-            # Prefer English voices
-            if "english" in voice.name.lower() or "en_" in voice.id.lower():
-                self.engine.setProperty("voice", voice.id)
-                break
+    def enqueue(self, text):
+        done = threading.Event()
+        with self.lock:
+            if text.strip() and not self.closed.is_set():
+                self.queue.put((text, done))
+            else:
+                done.set()
+        return done
 
-    def speak(self, text: str):
-        """Speak the given text."""
-        if not text:
-            return
-        print(f"🔊 {ASSISTANT_NAME} is speaking...")
-        self.engine.say(text)
-        self.engine.runAndWait()
+    def speak(self, text):
+        self.enqueue(text).wait()
 
     def stop(self):
-        """Stop speaking."""
-        self.engine.stop()
+        self.cancel.set()
+        while True:
+            try:
+                _, done = self.queue.get_nowait()
+                done.set()
+            except queue.Empty:
+                break
+
+    def close(self):
+        with self.lock:
+            self.closed.set()
+            self.stop()
+
+    def _run(self):
+        engine = None
+        try:
+            import pyttsx3
+            engine = pyttsx3.init()
+            engine.setProperty('rate', self.rate)
+            engine.setProperty('volume', self.volume)
+            engine.startLoop(False)
+            active, selected_language = None, None
+            while not self.closed.is_set():
+                if self.cancel.is_set():
+                    engine.stop()
+                    if active: active.set()
+                    active = None
+                    self.speaking.clear()
+                    self.cancel.clear()
+                if active is None:
+                    try:
+                        text, active = self.queue.get_nowait()
+                    except queue.Empty:
+                        text = None
+                    if text:
+                        if selected_language != self.language:
+                            prefix = self.language.split('-')[0].lower()
+                            match = next((v for v in engine.getProperty('voices')
+                                if prefix in str(getattr(v, 'languages', [])).lower()
+                                or (prefix == 'ta' and 'tamil' in v.name.lower())
+                                or (prefix == 'en' and 'english' in v.name.lower())), None)
+                            if match:
+                                engine.setProperty('voice', match.id)
+                                self.error = None
+                            else:
+                                self.error = f'No installed {self.language} speech voice. Text replies remain available.'
+                                active.set()
+                                active = None
+                                continue
+                            selected_language = self.language
+                        self.speaking.set()
+                        engine.say(text)
+                engine.iterate()
+                if active is not None and not engine.isBusy():
+                    active.set()
+                    active = None
+                    self.speaking.clear()
+                time.sleep(0.01)
+        except Exception:
+            self.error = 'Speech output unavailable. Install/configure pyttsx3 and a system speech engine.'
+        finally:
+            if 'active' in locals() and active: active.set()
+            with self.lock:
+                self.closed.set()
+                self.stop()
+            self.speaking.clear()
+            if engine:
+                try:
+                    engine.endLoop()
+                except Exception:
+                    pass

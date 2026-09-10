@@ -24,7 +24,7 @@ class AssistantTests(unittest.TestCase):
     def ai(self, reply='Hello'):
         self.bot.llm = Mock()
         self.bot.llm.chat.completions.create.return_value = SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=reply))])
+            choices=[SimpleNamespace(message=SimpleNamespace(content=reply, tool_calls=[]))])
 
     def test_offline_tools_and_persistent_tasks(self):
         self.assertEqual(self.bot.chat('/calc (12 + 8) * 3'), '60')
@@ -90,16 +90,18 @@ class AssistantTests(unittest.TestCase):
             self.assertEqual(self.bot.chat('second'), 'second reply')
         kwargs = self.bot.llm.messages.create.call_args.kwargs
         self.assertEqual([m['role'] for m in kwargs['messages']], ['user', 'assistant', 'user'])
-        self.assertEqual(kwargs['system'], assistant.SYSTEM_PROMPT)
+        self.assertIn(assistant.SYSTEM_PROMPT, kwargs['system'])
 
     def test_gemini_receives_context(self):
+        from google.genai import types
         self.ai()
         self.bot.chat('first')
-        self.bot.llm.generate_content.return_value = SimpleNamespace(text='second reply')
+        self.bot.llm.models.generate_content.return_value = types.GenerateContentResponse(
+            candidates=[types.Candidate(content=types.Content(role='model', parts=[types.Part.from_text(text='second reply')]))])
         with patch.object(assistant, 'DEFAULT_LLM', 'gemini'):
             self.assertEqual(self.bot.chat('second'), 'second reply')
-        contents = self.bot.llm.generate_content.call_args.args[0]
-        self.assertEqual([m['role'] for m in contents], ['user', 'model', 'user'])
+        contents = self.bot.llm.models.generate_content.call_args.kwargs['contents']
+        self.assertEqual([m.role for m in contents], ['user', 'model', 'user'])
 
     def test_ollama_uses_chat_protocol(self):
         self.ai('Local answer')
