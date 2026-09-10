@@ -6,9 +6,26 @@ Supports wake word, voice, and text input.
 
 from config import ASSISTANT_NAME
 from assistant import JarvisAssistant
-from voice import TextToSpeech, SpeechToText, WakeWordDetector
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Jarvis AI assistant")
+    parser.add_argument('--text', action='store_true', help='Text only: no microphone or speech dependencies')
+    args = parser.parse_args()
+    if args.text:
+        jarvis = JarvisAssistant()
+        print(f'{ASSISTANT_NAME} ready. Type /help for tools, exit to quit.')
+        while True:
+            try:
+                message = input('You: ').strip()
+            except (EOFError, KeyboardInterrupt):
+                break
+            if message.lower() in {'exit', 'quit', 'bye'}:
+                break
+            print(f'{ASSISTANT_NAME}: {jarvis.chat(message)}')
+        return
+    from voice import TextToSpeech, SpeechToText, WakeWordDetector
+
     print(f"\n🚀 Starting {ASSISTANT_NAME}...\n")
 
     jarvis = JarvisAssistant()
