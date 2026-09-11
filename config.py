@@ -1,8 +1,13 @@
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Installed apps must not search the launcher's working directory for secrets.
+CONFIG_PATH = Path(os.environ.get('JARVIS_CONFIG_PATH', str(Path.home() / '.jarvis' / '.env'))).expanduser()
+load_dotenv(CONFIG_PATH)
+if not getattr(sys, 'frozen', False):
+    load_dotenv(Path(__file__).resolve().parent / '.env')
 ASSISTANT_NAME = os.getenv('ASSISTANT_NAME', 'Jarvis')
 DEFAULT_LLM = os.getenv('DEFAULT_LLM', 'openai').strip().lower()
 MODEL_DEFAULTS = {'openai': 'gpt-4o-mini', 'anthropic': 'claude-sonnet-4-20250514',

@@ -17,6 +17,56 @@ Built in **Python** with a modern dark GUI.
 
 ## How to Run
 
+### Download an installer
+
+Open **Actions → Build installers → a successful run → Artifacts** in this
+repository. Download and extract the ZIP for your operating system:
+
+| Platform | Installer | Installation |
+|---|---|---|
+| Windows 10/11 x64 | `Jarvis-Setup-1.0.0-x64.exe` | Double-click; follow the setup wizard |
+| Ubuntu 22.04+ / Linux Mint 21+ x64 | `jarvis-ai-assistant_1.0.0_amd64.deb` | `sudo apt install ./jarvis-ai-assistant_1.0.0_amd64.deb` |
+
+The installers include Python and the desktop dependencies. Windows setup adds
+a Start menu entry and an optional desktop shortcut. Linux adds an application
+menu entry and the `jarvis` command. Other Debian-based distributions are not yet
+validated. These are unsigned builds; Windows may display an unknown-publisher warning.
+
+On first launch Jarvis creates a settings template at `~/.jarvis/.env`
+(`%USERPROFILE%\.jarvis\.env` on Windows). Edit it with your provider/API key or
+Ollama settings, then restart Jarvis. You can use offline commands without a key.
+Set `JARVIS_CONFIG_PATH` to use another settings file. Environment variables take
+precedence. Source checkouts also support the repository `.env` as a fallback.
+API keys and your memory database are never included in the installers.
+Uninstalling keeps your personal settings and memory in `~/.jarvis`.
+
+### Build your own installers
+
+GitHub Actions builds and smoke-tests both platforms on pushes to `main`, pull
+requests, version tags, or **Run workflow**. Outputs are retained for 30 days;
+they are not automatically published as GitHub Releases. Update `VERSION` before
+building a new version. Each artifact also records resolved dependency versions.
+
+For local builds, use Python 3.11 in a fresh virtual environment on the target OS:
+
+```bash
+python -m pip install -r requirements-build.txt
+python -m PyInstaller --clean --noconfirm packaging/jarvis.spec
+```
+
+On Ubuntu, first install `python3-tk portaudio19-dev libespeak1` with apt, then run:
+
+```bash
+python packaging/build_deb.py
+```
+
+On Windows, install [Inno Setup 6](https://jrsoftware.org/isinfo.php), then run
+`ISCC /DAppVersion=1.0.0 packaging/windows.iss` from a terminal where ISCC is on PATH.
+Use the version from `VERSION`. Installers appear in `dist/installers/`.
+The [PyInstaller configuration](https://pyinstaller.org/en/stable/usage.html)
+bundles the GUI theme assets, voice libraries and provider integrations.
+Build Windows on Windows and Linux on Linux.
+
 ### 1. Install
 ```bash
 git clone https://github.com/Hirunthakan432/jarvis-ai-assistant.git
