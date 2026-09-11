@@ -1,5 +1,6 @@
 """Local SQLite conversation and task storage (never committed to Git)."""
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 
 
@@ -11,8 +12,14 @@ class MemoryStore:
             db.execute('CREATE TABLE IF NOT EXISTS turns (id INTEGER PRIMARY KEY, user TEXT, assistant TEXT)')
             db.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, text TEXT, done INTEGER DEFAULT 0)')
 
+    @contextmanager
     def connect(self):
-        return sqlite3.connect(self.path, timeout=10)
+        db = sqlite3.connect(self.path, timeout=10)
+        try:
+            with db:
+                yield db
+        finally:
+            db.close()
 
     def history(self, limit):
         with self.connect() as db:
