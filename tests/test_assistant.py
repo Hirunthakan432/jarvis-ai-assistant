@@ -1,4 +1,5 @@
 import tempfile
+from dataclasses import replace
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,23 +14,21 @@ class AssistantTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name) / 'memory.sqlite3'
-        self.init = patch.object(assistant.JarvisAssistant, '_init_llm', return_value=None)
+        self.settings = replace(assistant.SETTINGS, llm_provider='openai')
+        self.init = patch.object(assistant, 'create_provider', return_value=None)
         self.init.start()
         self.addCleanup(self.init.stop)
-        self.provider = patch.object(assistant, 'DEFAULT_LLM', 'openai')
-        self.provider.start()
-        self.addCleanup(self.provider.stop)
-        self.bot = assistant.JarvisAssistant(self.path)
+        self.bot = assistant.JarvisAssistant(self.path, settings=self.settings)
 
     def ai(self, reply='Hello'):
         self.bot.llm = Mock()
         self.bot.llm.chat.completions.create.return_value = SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=reply))])
+            choices=[SimpleNamespace(message=SimpleNamespace(content=reply, tool_calls=[]))])
 
     def test_offline_tools_and_persistent_tasks(self):
         self.assertEqual(self.bot.chat('/calc (12 + 8) * 3'), '60')
         self.assertIn('saved', self.bot.chat('/task add Study தமிழ்'))
-        restored = assistant.JarvisAssistant(self.path)
+        restored = assistant.JarvisAssistant(self.path, settings=self.settings)
         self.assertIn('Study தமிழ்', restored.chat('/tasks'))
         restored.chat('/clear')
         self.assertIn('Study தமிழ்', restored.chat('/tasks'))
@@ -40,10 +39,10 @@ class AssistantTests(unittest.TestCase):
     def test_memory_reload_and_clear(self):
         self.ai('Hello Hirunthakan')
         self.bot.chat('My name is Hirunthakan')
-        restored = assistant.JarvisAssistant(self.path)
+        restored = assistant.JarvisAssistant(self.path, settings=self.settings)
         self.assertEqual(restored.history, self.bot.history)
         restored.reset()
-        self.assertEqual(len(assistant.JarvisAssistant(self.path).history), 1)
+        self.assertEqual(len(assistant.JarvisAssistant(self.path, settings=self.settings).history), 1)
 
     def test_failed_request_does_not_change_history(self):
         self.ai()
@@ -53,20 +52,21 @@ class AssistantTests(unittest.TestCase):
         result = self.bot.chat('retry')
         self.assertNotIn('SECRET_KEY', result)
         self.assertEqual(before, self.bot.history)
-        self.assertEqual(before, assistant.JarvisAssistant(self.path).history)
+        self.assertEqual(before, assistant.JarvisAssistant(self.path, settings=self.settings).history)
 
     def test_history_is_bounded_in_memory_and_on_disk(self):
         self.ai()
-        with patch.object(assistant, 'MAX_HISTORY_TURNS', 2):
-            for i in range(5):
-                self.bot.chat(str(i))
-            self.assertEqual([m['content'] for m in self.bot.history[1::2]], ['3', '4'])
-            self.assertEqual(self.bot.history, assistant.JarvisAssistant(self.path).history)
+        self.settings = replace(self.settings, history_max_messages=4)
+        self.bot = assistant.JarvisAssistant(self.path, settings=self.settings, provider=self.bot.provider)
+        for i in range(5):
+            self.bot.chat(str(i))
+        self.assertEqual([m['content'] for m in self.bot.history[1::2]], ['3', '4'])
+        self.assertEqual(self.bot.history, assistant.JarvisAssistant(self.path, settings=self.settings).history)
 
     def test_empty_and_long_messages_do_not_call_model(self):
         self.ai()
         self.bot.chat(' ')
-        self.bot.chat('x' * (assistant.MAX_MESSAGE_CHARS + 1))
+        self.bot.chat('x' * (self.settings.max_message_chars + 1))
         self.bot.llm.chat.completions.create.assert_not_called()
 
     def test_commands_are_not_sent_to_model(self):
@@ -86,24 +86,26 @@ class AssistantTests(unittest.TestCase):
         self.bot.chat('first')
         self.bot.llm.messages.create.return_value = SimpleNamespace(content=[
             SimpleNamespace(type='text', text='second reply')])
-        with patch.object(assistant, 'DEFAULT_LLM', 'anthropic'):
+        with patch.object(self.bot.provider, 'provider', 'anthropic'):
             self.assertEqual(self.bot.chat('second'), 'second reply')
         kwargs = self.bot.llm.messages.create.call_args.kwargs
         self.assertEqual([m['role'] for m in kwargs['messages']], ['user', 'assistant', 'user'])
-        self.assertEqual(kwargs['system'], assistant.SYSTEM_PROMPT)
+        self.assertIn(self.settings.system_prompt, kwargs['system'])
 
     def test_gemini_receives_context(self):
+        from google.genai import types
         self.ai()
         self.bot.chat('first')
-        self.bot.llm.generate_content.return_value = SimpleNamespace(text='second reply')
-        with patch.object(assistant, 'DEFAULT_LLM', 'gemini'):
+        self.bot.llm.models.generate_content.return_value = types.GenerateContentResponse(
+            candidates=[types.Candidate(content=types.Content(role='model', parts=[types.Part.from_text(text='second reply')]))])
+        with patch.object(self.bot.provider, 'provider', 'gemini'):
             self.assertEqual(self.bot.chat('second'), 'second reply')
-        contents = self.bot.llm.generate_content.call_args.args[0]
-        self.assertEqual([m['role'] for m in contents], ['user', 'model', 'user'])
+        contents = self.bot.llm.models.generate_content.call_args.kwargs['contents']
+        self.assertEqual([m.role for m in contents], ['user', 'model', 'user'])
 
     def test_ollama_uses_chat_protocol(self):
         self.ai('Local answer')
-        with patch.object(assistant, 'DEFAULT_LLM', 'ollama'):
+        with patch.object(self.bot.provider, 'provider', 'ollama'):
             self.assertEqual(self.bot.chat('hello'), 'Local answer')
         self.bot.llm.chat.completions.create.assert_called_once()
 
