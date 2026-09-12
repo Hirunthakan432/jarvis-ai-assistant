@@ -153,7 +153,7 @@ class AdvancedTests(unittest.TestCase):
         (outside/'notes2.txt').write_text('x')
         (root/'linked').symlink_to(outside, target_is_directory=True)
         result = find_files('notes', [str(root)])
-        self.assertEqual(result['files'], [str(root/'notes.txt')])
+        self.assertEqual(result['files'], [str((root/'notes.txt').resolve())])
 
     def test_activity_does_not_log_arguments(self):
         self.tools.execute('remember', {'key':'secret', 'value':'VERY_PRIVATE_VALUE'})

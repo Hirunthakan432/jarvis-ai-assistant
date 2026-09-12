@@ -74,7 +74,7 @@ class IntegrationTests(unittest.TestCase):
             'HISTORY_MAX_MESSAGES': '5', 'OPENAI_API_KEY': 'sk-...',
             'JARVIS_MEMORY_PATH': self.settings.memory_path,
             'REPLY_LANGUAGE': 'Tamil',
-        }, clear=True):
+        }, clear=True), patch('config.Path.home', return_value=Path(self.tmp.name)):
             settings = Settings.from_env()
             self.assertEqual(settings.llm_provider, 'ollama')
             self.assertEqual(settings.model, 'llama3.2:3b')
@@ -87,6 +87,7 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(Settings.from_env().max_history_turns, 3)
 
     def test_invalid_legacy_history_limit_is_rejected(self):
-        with patch.dict(os.environ, {'HISTORY_MAX_MESSAGES': '1'}, clear=True):
+        with patch.dict(os.environ, {'HISTORY_MAX_MESSAGES': '1'}, clear=True), \
+                patch('config.Path.home', return_value=Path(self.tmp.name)):
             with self.assertRaises(ValueError):
                 Settings.from_env()
