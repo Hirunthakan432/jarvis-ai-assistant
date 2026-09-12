@@ -45,7 +45,7 @@ class WakeWordDetector:
             print("   Falling back to manual mode.\n")
             self.enabled = False
 
-    def listen_for_wake_word(self) -> bool:
+    def listen_for_wake_word(self, stop_event=None) -> bool:
         """
         Continuously listen until the wake word is detected.
         Returns True when wake word is heard, False if disabled or error.
@@ -58,7 +58,7 @@ class WakeWordDetector:
         try:
             self.recorder.start()
 
-            while True:
+            while stop_event is None or not stop_event.is_set():
                 pcm = self.recorder.read()
                 result = self.porcupine.process(pcm)
 
@@ -66,6 +66,9 @@ class WakeWordDetector:
                     print(f"\n✨ Wake word detected!")
                     self.recorder.stop()
                     return True
+
+            self.recorder.stop()
+            return False
 
         except KeyboardInterrupt:
             print("\nWake word listening stopped.")

@@ -1,103 +1,64 @@
 #!/usr/bin/env python3
-"""
-Jarvis AI Assistant - Entry Point
-Supports wake word, voice, and text input.
-"""
-
-from config import ASSISTANT_NAME
+"""Text/voice CLI with background reminder delivery."""
+import argparse
+import threading
 from assistant import JarvisAssistant
+from config import ASSISTANT_NAME, VOICE_LANGUAGE
+
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="Jarvis AI assistant")
-    parser.add_argument('--text', action='store_true', help='Text only: no microphone or speech dependencies')
+    parser = argparse.ArgumentParser(description='Jarvis AI assistant')
+    parser.add_argument('--text', action='store_true', help='No microphone or speech dependencies')
+    parser.add_argument('--wake', action='store_true', help='Listen for the wake word (voice mode only)')
     args = parser.parse_args()
-    if args.text:
-        jarvis = JarvisAssistant()
-        print(f'{ASSISTANT_NAME} ready. Type /help for tools, exit to quit.')
-        while True:
-            try:
-                message = input('You: ').strip()
-            except (EOFError, KeyboardInterrupt):
-                break
-            if message.lower() in {'exit', 'quit', 'bye'}:
-                break
-            print(f'{ASSISTANT_NAME}: {jarvis.chat(message)}')
-        return
-    from voice import TextToSpeech, SpeechToText, WakeWordDetector
-
-    print(f"\n🚀 Starting {ASSISTANT_NAME}...\n")
-
+    if args.text and args.wake:
+        parser.error('--wake cannot be combined with --text')
     jarvis = JarvisAssistant()
-    tts = TextToSpeech()
-    stt = SpeechToText()
-    wake = WakeWordDetector()
-
-    print(f"{ASSISTANT_NAME} is online.\n")
-    print("How to use:")
-    if wake.enabled:
-        print(f"  • Say \"{ASSISTANT_NAME}\" → activates listening")
-    print("  • Press Enter → listen immediately (no wake word)")
-    print("  • Type a message + Enter → text mode")
-    print("  • Type 'quit' / 'exit' / 'bye' → shut down\n")
-
-    # Greeting
-    greeting = f"Hello. {ASSISTANT_NAME} is online and ready to assist you."
-    print(f"{ASSISTANT_NAME}: {greeting}\n")
-    tts.speak(greeting)
-
+    stopped = threading.Event()
+    tts = stt = wake = None
+    if not args.text:
+        from voice import TextToSpeech, SpeechToText
+        tts, stt = TextToSpeech(language=VOICE_LANGUAGE), SpeechToText(language=VOICE_LANGUAGE)
+        if args.wake:
+            from voice import WakeWordDetector
+            wake = WakeWordDetector()
+    def reminders():
+        while not stopped.wait(1):
+            try:
+                for key, text in jarvis.memory.due():
+                    print(f'\nReminder #{key}: {text}', flush=True)
+                    if tts: tts.enqueue(text)
+            except Exception:
+                print('\nReminder storage unavailable. Check permissions and disk space.', flush=True)
+                return
+    threading.Thread(target=reminders, daemon=True).start()
+    print(f'{ASSISTANT_NAME} ready. Type /help for tools, exit to quit.')
     try:
         while True:
-            try:
-                # If wake word is enabled, wait for it first
-                if wake.enabled:
-                    detected = wake.listen_for_wake_word()
-                    if not detected:
-                        # User pressed Ctrl+C during wake listening
-                        break
-
-                    # Acknowledge activation
-                    tts.speak("Yes?")
-
-                    # Now listen for the actual command
-                    user_input = stt.listen()
-                    if not user_input:
-                        continue
-                else:
-                    # Fallback hybrid mode (no wake word)
-                    user_input = input("You (press Enter to speak, or type): ").strip()
-
-                    if user_input.lower() in {"quit", "exit", "bye", "goodbye"}:
-                        farewell = "Goodbye, sir. Shutting down."
-                        print(f"\n{ASSISTANT_NAME}: {farewell}\n")
-                        tts.speak(farewell)
-                        break
-
-                    if not user_input:
-                        user_input = stt.listen()
-                        if not user_input:
-                            continue
-
-                # Process the command
-                if user_input.lower() in {"quit", "exit", "bye", "goodbye"}:
-                    farewell = "Goodbye, sir. Shutting down."
-                    print(f"\n{ASSISTANT_NAME}: {farewell}\n")
-                    tts.speak(farewell)
-                    break
-
-                response = jarvis.chat(user_input)
-                print(f"\n{ASSISTANT_NAME}: {response}\n")
-                tts.speak(response)
-
-            except KeyboardInterrupt:
-                print(f"\n\n{ASSISTANT_NAME}: Shutting down.\n")
-                break
-            except Exception as e:
-                print(f"Error: {e}")
-
+            if wake and wake.enabled:
+                if not wake.listen_for_wake_word(stopped): break
+                message = stt.listen() or ''
+            else:
+                message = input('You: ').strip()
+                if not message and stt:
+                    if tts: tts.stop()
+                    message = stt.listen() or ''
+            if message.lower() in {'exit', 'quit', 'bye'}: break
+            if not message: continue
+            reply = jarvis.chat(message)
+            print(f'{ASSISTANT_NAME}: {reply}', flush=True)
+            if tts:
+                language = 'ta-IN' if jarvis.language == 'Tamil' else 'en-US'
+                tts.language = stt.language = language
+                tts.speak(reply)
+                if tts.error: print(tts.error)
+    except (EOFError, KeyboardInterrupt):
+        pass
     finally:
-        # Clean up wake word resources
-        wake.delete()
+        stopped.set()
+        if tts: tts.close()
+        if wake: wake.delete()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()

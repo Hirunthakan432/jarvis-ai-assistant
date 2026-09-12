@@ -5,11 +5,13 @@ Falls back gracefully if microphone is unavailable.
 """
 
 import speech_recognition as sr
-from config import ASSISTANT_NAME
+from config import ASSISTANT_NAME, VOICE_LANGUAGE
 
 class SpeechToText:
-    def __init__(self, timeout: int = 5, phrase_time_limit: int = 10):
+    def __init__(self, timeout: int = 5, phrase_time_limit: int = 10, language: str = VOICE_LANGUAGE):
         self.recognizer = sr.Recognizer()
+        self.recognizer.operation_timeout = 8
+        self.language = language
         self.timeout = timeout
         self.phrase_time_limit = phrase_time_limit
         self.microphone = None
@@ -46,7 +48,7 @@ class SpeechToText:
 
             print("Recognizing...")
             # Using Google Web Speech API (free, no API key required)
-            text = self.recognizer.recognize_google(audio)
+            text = self.recognizer.recognize_google(audio, language=self.language)
             print(f"You said: {text}")
             return text.strip()
 

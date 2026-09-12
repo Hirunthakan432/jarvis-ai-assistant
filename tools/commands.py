@@ -12,7 +12,19 @@ HELP = '''Offline commands (no API key needed):
 /tasks — list unfinished tasks
 /task done 1 — complete a task by ID
 /status — provider and memory information
-/clear — clear saved conversation (tasks are kept)'''
+/clear — clear saved conversation (tasks, memories, documents are kept)
+/search query — live web results
+/attach /path/notes.pdf — import notes locally; matching passages may be sent to AI
+/documents and /detach ID — list/remove imported notes
+/memory, /remember key=value, /forget key — manage long-term memory
+/remind delay_seconds | repeat_seconds | text — schedule notification (repeat 0 = once)
+/reminders and /unremind ID — list/cancel reminders
+/apps, /open alias, /find filename — configured desktop tools
+/devices and /device alias — read configured ESP32 JSON endpoints
+/vision /path/image.png | question — send a selected image to your AI provider
+/language Tamil, English or auto — choose reply language
+/pending, /confirm TOKEN, /cancel TOKEN — review and approve actions
+/activity — view recent tool activity'''
 
 
 def calculate(expression):
