@@ -37,6 +37,7 @@ def build():
               'Section: utils\nPriority: optional\nArchitecture: amd64\n'
               'Maintainer: Hirunthakan432 <210463732+Hirunthakan432@users.noreply.github.com>\n'
               'Depends: libc6 (>= 2.35), libstdc++6, libgcc-s1, libx11-6, libxext6, libxrender1, libxft2, libfontconfig1, libportaudio2, libasound2, libespeak1\n'
+              'Recommends: xdg-utils, xdotool, wmctrl, x11-xserver-utils\n'
               'Description: Jarvis personal AI desktop assistant\n'
               ' Bundled Python GUI with local tasks, chat and voice support.\n')
         subprocess.run(['dpkg-deb', '--root-owner-group', '--build', str(stage),

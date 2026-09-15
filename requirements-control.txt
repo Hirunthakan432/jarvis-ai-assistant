@@ -1,0 +1,5 @@
+# Optional for source text mode; included in desktop installers.
+psutil>=5.9.6,<8
+PyAutoGUI>=0.9.54,<1
+screen-brightness-control>=0.24,<1
+Send2Trash>=1.8.3,<3
