@@ -25,6 +25,10 @@ def main():
             import pypdf
             import PIL.Image
             import requests
+            import pyautogui
+            import psutil
+            import screen_brightness_control
+            import send2trash
             driver = 'sapi5' if sys.platform == 'win32' else 'espeak'
             __import__('pyttsx3.drivers.' + driver)
             bot = JarvisAssistant(Path(directory) / 'memory.sqlite3')
@@ -33,6 +37,8 @@ def main():
             assert 'installer check' in bot.chat('/tasks')
             assert bot.chat('/remember smoke=installed') == 'Memory saved.'
             assert 'installed' in bot.chat('/memory')
+            assert 'control_enabled' in bot.chat('/computer')
+            assert 'off' in bot.chat('/control status')
             assert 'saved' in bot.chat('/remind 60 | 0 | Installer reminder')
             note = Path(directory) / 'notes.txt'
             note.write_text('Jarvis installer integration check.', encoding='utf-8')

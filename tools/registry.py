@@ -7,6 +7,9 @@ from datetime import datetime
 from integrations.desktop import find_files, open_app
 from integrations.network import read_device, web_search
 from tools.commands import calculate
+from tools.computer_specs import COMPUTER_TOOLS, COMPUTER_NAMES
+from integrations.computer import ComputerControl, INPUT_ACTIONS
+from integrations.workspace import WorkspaceFiles
 
 
 def tool(name, description, properties=None, required=None, mutation=False):
@@ -44,6 +47,7 @@ TOOLS = [
     tool('read_device', 'Read JSON sensor readings from a configured ESP32/device alias.',
          {'name': string('Configured device alias')}, ['name']),
 ]
+TOOLS += COMPUTER_TOOLS
 
 
 class ToolRegistry:
@@ -53,6 +57,8 @@ class ToolRegistry:
         self.pending = {}
         self.lock = threading.RLock()
         self.specs = {spec['name']: spec for spec in TOOLS}
+        self.computer = ComputerControl()
+        self.files = WorkspaceFiles(self.roots)
 
     def schemas(self):
         return [{k: v for k, v in spec.items() if k != 'mutation'} for spec in TOOLS]
@@ -64,45 +70,82 @@ class ToolRegistry:
         if set(arguments) - set(schema['properties']) or set(schema['required']) - set(arguments):
             raise ValueError('Unexpected or missing arguments.')
         for key, value in arguments.items():
-            expected = schema['properties'][key]['type']
-            if expected == 'integer' and (type(value) is not int or not 0 <= value < 2**63):
-                raise ValueError('Expected a non-negative integer.')
-            if expected == 'string' and (not isinstance(value, str) or not value.strip() or len(value) > 2000):
-                raise ValueError('Expected 1–2000 characters of text.')
+            rule = schema['properties'][key]
+            expected = rule['type']
+            if expected == 'integer' and (type(value) is not int or not rule.get('minimum', 0) <= value <= rule.get('maximum', 2**63 - 1)):
+                raise ValueError(f'Invalid integer for {key}. Check its supported range.')
+            if expected == 'string' and (not isinstance(value, str) or not value.strip() or '\x00' in value or len(value) > rule.get('maxLength', 2000)):
+                raise ValueError(f'Invalid text for {key}. Check its length and contents.')
+            if 'enum' in rule and value not in rule['enum']:
+                raise ValueError(f'Unsupported {key}. Choose one of: ' + ', '.join(rule['enum']))
 
-    def execute(self, name, arguments, trusted_user=False):
-        with self.lock:
-            try:
+    def execute(self, name, arguments, trusted_user=False, _approved=None, _session=None):
+        try:
+            with self.lock:
                 self._validate(name, arguments)
+                prepared = None
+                session = _session or self.computer._session
+                if name in COMPUTER_NAMES and name != 'computer_status':
+                    self.computer.check(session)
+                    if name in {'manage_file', 'open_path', 'list_folder'}:
+                        prepared = self.files.prepare(name, arguments)
+                    else:
+                        prepared = self.computer.prepare(name, arguments)
+                    if trusted_user and self.specs[name]['mutation'] and _approved is None:
+                        raise ValueError('Device actions require a single-use confirmation token.')
                 if self.specs[name]['mutation'] and not trusted_user:
                     self.pending = {k: v for k, v in self.pending.items() if v[0] > time.monotonic()}
                     if len(self.pending) >= 10:
                         raise ValueError('Too many pending actions. Confirm or cancel existing actions first.')
                     token = secrets.token_hex(4)
-                    self.pending[token] = (time.monotonic()+300, name, dict(arguments))
+                    self.pending[token] = (time.monotonic()+300, name, dict(arguments), prepared, session)
                     self.memory.audit(name, 'awaiting confirmation')
+                    note = ''
+                    if name in INPUT_ACTIONS:
+                        note = ' After confirmation, focus the target app within four seconds. Input goes to that app; move the mouse to a screen corner to stop.'
+                    if name in {'power_control', 'terminate_process', 'window_action'}:
+                        note += ' Save any unsaved work first.'
                     return {'status': 'confirmation_required', 'token': token,
-                            'preview': {'action': name, 'arguments': arguments},
-                            'instruction': f'User must enter /confirm {token} or /cancel {token}. Nothing has run.'}
-                self.memory.audit(name, 'started')
-                result = self._run(name, arguments)
-                try:
-                    self.memory.audit(name, 'completed')
-                except Exception:
-                    return {'status': 'ok', 'result': result, 'note': 'Action ran, but its completion could not be written to the activity log. Do not retry solely for this warning.'}
-                return {'status': 'ok', 'result': result}
-            except Exception as error:
-                # Known input errors are useful; SDK/network exceptions may include secrets/paths.
-                detail = str(error) if isinstance(error, ValueError) else 'Integration unavailable. Check installation, connection and local configuration.'
-                return {'status': 'error', 'error': detail}
+                            'preview': {'action': name, 'arguments': arguments,
+                                        **({'process_name': prepared['process_name']} if name == 'terminate_process' else {})},
+                            'instruction': f'User must enter /confirm {token} or /cancel {token}. Nothing has run.' + note}
+            # Never hold the approval lock while waiting on a desktop action: Stop must stay responsive.
+            self.memory.audit(name, 'started')
+            result = self._run(name, arguments, _approved, session)
+            try:
+                self.memory.audit(name, 'completed')
+            except Exception:
+                return {'status': 'ok', 'result': result, 'note': 'Action ran, but its completion could not be written to the activity log. Do not retry solely for this warning.'}
+            return {'status': 'ok', 'result': result}
+        except Exception as error:
+            # Known input errors are useful; SDK/network exceptions may include secrets/paths.
+            try: self.memory.audit(name if name in self.specs else 'unknown_tool', 'failed')
+            except Exception: pass
+            detail = str(error) if isinstance(error, ValueError) else 'Integration unavailable. Check installation, connection and local configuration. If an action started, check its result before retrying.'
+            return {'status': 'error', 'error': detail}
 
     def confirm(self, token):
         with self.lock:
             proposal = self.pending.pop(token, None)
             if proposal is None or proposal[0] <= time.monotonic():
                 return {'status': 'error', 'error': 'Approval expired or not found. Ask again.'}
-            _, name, arguments = proposal
-            return self.execute(name, arguments, trusted_user=True)
+            _, name, arguments, prepared, session = proposal
+        return self.execute(name, arguments, trusted_user=True, _approved=prepared, _session=session)
+
+    def stop(self):
+        self.computer.stop()
+        self.cancel()
+        return 'Stopped. Device control is off and pending approvals are cancelled. Completed actions cannot be undone.'
+
+    def enable_control(self):
+        with self.lock:
+            self.cancel()
+            return self.computer.enable()
+
+    def needs_focus(self, token):
+        with self.lock:
+            proposal = self.pending.get(token)
+            return bool(proposal and proposal[0] > time.monotonic() and proposal[1] in INPUT_ACTIONS)
 
     def cancel(self, token=None):
         with self.lock:
@@ -112,7 +155,11 @@ class ToolRegistry:
                 self.pending.clear()
         return 'Pending action cancelled.'
 
-    def _run(self, name, a):
+    def _run(self, name, a, approved=None, session=None):
+        if name == 'computer_status': return self.computer.status()
+        if name in {'manage_file', 'open_path', 'list_folder'}:
+            return self.files.run(name, a, approved, lambda: self.computer.check(session))
+        if name in COMPUTER_NAMES: return self.computer.run(name, a, approved, session)
         if name == 'calculate': return str(calculate(a['expression']))
         if name == 'current_time': return datetime.now().astimezone().isoformat()
         if name == 'web_search': return web_search(a['query'])

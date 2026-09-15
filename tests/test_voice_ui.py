@@ -51,6 +51,7 @@ class VoiceTests(unittest.TestCase):
         JarvisGUI._stop(ui)
         self.assertTrue(ui.cancel.is_set())
         ui.tts.stop.assert_called_once()
+        ui.jarvis.tools.stop.assert_called_once()
 
     def test_gui_poll_handles_late_stream_after_stop(self):
         from gui import JarvisGUI

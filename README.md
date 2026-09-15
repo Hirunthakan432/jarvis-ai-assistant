@@ -12,7 +12,7 @@ It supports OpenAI, Anthropic, Gemini and compatible local Ollama models.
 | Chat with files | Attach PDF/text/code notes, then ask questions or request a study quiz. Sources use `doc:ID@offset`. |
 | Long-term memory | `/remember preferred_language=Tamil`, `/memory`, `/forget preferred_language`. Use the same key to edit a fact. |
 | Streaming voice | GUI replies appear and speak sentence by sentence. Use **Stop / interrupt** or **Mic** to interrupt. |
-| Desktop control | Configure application aliases and search folders, then use `/open vscode` or `/find homework`. |
+| Desktop control | **Device controls** or `/control on`: confirmed mouse, keyboard, windows, media, brightness, files, processes and power actions. [Guide](docs/device-control.md). |
 | Screenshot understanding | **Share image** or **Screenshot**, then ask a question using a vision-capable model. |
 | Reminders and routines | “Remind me in 20 minutes…” or `/remind 1200 | 0 | Take a break`. |
 | ESP32 integration | Configure JSON sensor endpoints, then `/device distance_meter`. |
@@ -27,8 +27,8 @@ repository. Download and extract the ZIP for your operating system:
 
 | Platform | Installer | Installation |
 |---|---|---|
-| Windows 10/11 x64 | `Jarvis-Setup-1.0.0-x64.exe` | Double-click; follow the setup wizard |
-| Ubuntu 22.04+ / Linux Mint 21+ x64 | `jarvis-ai-assistant_1.0.0_amd64.deb` | `sudo apt install ./jarvis-ai-assistant_1.0.0_amd64.deb` |
+| Windows 10/11 x64 | `Jarvis-Setup-1.1.0-x64.exe` | Double-click; follow the setup wizard |
+| Ubuntu 22.04+ / Linux Mint 21+ x64 | `jarvis-ai-assistant_1.1.0_amd64.deb` | `sudo apt install ./jarvis-ai-assistant_1.1.0_amd64.deb` |
 
 The installers include Python and the desktop dependencies. Windows setup adds
 a Start menu entry and an optional desktop shortcut. Linux adds an application
@@ -64,7 +64,7 @@ python packaging/build_deb.py
 ```
 
 On Windows, install [Inno Setup 6](https://jrsoftware.org/isinfo.php), then run
-`ISCC /DAppVersion=1.0.0 packaging/windows.iss` from a terminal where ISCC is on PATH.
+`ISCC /DAppVersion=1.1.0 packaging/windows.iss` from a terminal where ISCC is on PATH.
 Use the version from `VERSION`. Installers appear in `dist/installers/`.
 The [PyInstaller configuration](https://pyinstaller.org/en/stable/usage.html)
 bundles the GUI theme assets, voice libraries and provider integrations.
@@ -177,8 +177,14 @@ Screenshot temp files are removed after the request or when the app closes.
 
 Configure only local commands you trust. Model calls accept an alias, never an
 executable path or extra arguments. `/open alias` also requires an approval token.
-No arbitrary shell commands, file deletion, keyboard automation or destructive
-computer operations are implemented.
+The expanded device controls add mouse/keyboard input, window controls, media,
+brightness, process termination, power actions and file creation/copy/move/Trash.
+Enable them per session with `/control on`; every change needs a separate preview
+and confirmation. `/stop` disables control and cancels pending approvals. File
+actions stay inside `JARVIS_FILE_ROOTS_JSON` and never overwrite existing files.
+See the [device-control guide](docs/device-control.md) for commands, installation,
+Windows/Linux support and physical-device checks. No direct arbitrary-shell
+tool or privilege escalation is provided.
 
 Linux example:
 
@@ -280,7 +286,7 @@ limit rounds down to complete user/assistant pairs.
 ## Validation
 
 ```bash
-pip install -r requirements-advanced.txt customtkinter
+pip install -r requirements-advanced.txt -r requirements-control.txt customtkinter
 python -m unittest discover -s tests -v
 python -m compileall -q assistant.py config.py providers.py gui.py main.py core memory tools integrations voice packaging
 ```
