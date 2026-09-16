@@ -2,11 +2,17 @@
 
 A Python desktop and voice assistant for studying, programming and everyday tasks.
 It supports OpenAI, Anthropic, Gemini and compatible local Ollama models.
+Device controls also understand supported phrases and user-taught commands locally,
+without an AI model or API. Start with `/local` or read the
+[local commands and offline voice guide](docs/local-commands.md).
 
 ## Advanced capabilities
 
 | Capability | How to use it |
 |---|---|
+| Local device understanding | “Set brightness to fifty percent”, “Open vscode”, “Lock my computer”. No AI call; changes need confirmation. |
+| Teach personal commands | `/learn study time => /open vscode`, `/learned`, `/unlearn study time`. Saved locally across restarts. |
+| Optional AI | `/ai off` or `JARVIS_AI_ENABLED=false`; controls remain available. `/ai on` allows general AI questions. |
 | Native AI tool calling | “Add ICT homework to my tasks.” Review the action preview, then enter `/confirm TOKEN`. |
 | Live web search | “Search the web for…” or `/search query`. Results include source URLs. |
 | Chat with files | Attach PDF/text/code notes, then ask questions or request a study quiz. Sources use `doc:ID@offset`. |
@@ -27,8 +33,8 @@ repository. Download and extract the ZIP for your operating system:
 
 | Platform | Installer | Installation |
 |---|---|---|
-| Windows 10/11 x64 | `Jarvis-Setup-1.1.0-x64.exe` | Double-click; follow the setup wizard |
-| Ubuntu 22.04+ / Linux Mint 21+ x64 | `jarvis-ai-assistant_1.1.0_amd64.deb` | `sudo apt install ./jarvis-ai-assistant_1.1.0_amd64.deb` |
+| Windows 10/11 x64 | `Jarvis-Setup-1.2.0-x64.exe` | Double-click; follow the setup wizard |
+| Ubuntu 22.04+ / Linux Mint 21+ x64 | `jarvis-ai-assistant_1.2.0_amd64.deb` | `sudo apt install ./jarvis-ai-assistant_1.2.0_amd64.deb` |
 
 The installers include Python and the desktop dependencies. Windows setup adds
 a Start menu entry and an optional desktop shortcut. Linux adds an application
@@ -64,7 +70,7 @@ python packaging/build_deb.py
 ```
 
 On Windows, install [Inno Setup 6](https://jrsoftware.org/isinfo.php), then run
-`ISCC /DAppVersion=1.1.0 packaging/windows.iss` from a terminal where ISCC is on PATH.
+`ISCC /DAppVersion=1.2.0 packaging/windows.iss` from a terminal where ISCC is on PATH.
 Use the version from `VERSION`. Installers appear in `dist/installers/`.
 The [PyInstaller configuration](https://pyinstaller.org/en/stable/usage.html)
 bundles the GUI theme assets, voice libraries and provider integrations.
@@ -87,6 +93,10 @@ cp .env.example .env
 Choose one installation:
 
 ```bash
+# Local typed device controls without any AI SDK
+pip install -r requirements-local.txt
+python main.py --text --no-ai
+
 # Minimal AI text chat + offline commands
 pip install -r requirements-text.txt
 python main.py --text
@@ -142,11 +152,15 @@ Use **Wake word** in the GUI or `python main.py --wake` in the CLI. Set
 `PORCUPINE_ACCESS_KEY` first. Wake listening pauses during generation, speech and manual
 microphone capture. In regular CLI mode, press Enter to speak or type a message.
 
-Choose **Tamil** to use Tamil replies and `ta-IN` speech recognition; English uses
+Choose **Tamil** for Tamil replies and the `ta-IN` microphone language; English uses
 `en-US`. Auto follows your written language and uses an English microphone setting.
-Recognition sends microphone audio to Google Web Speech. Speech output uses installed
-system voices: install a Tamil voice for Tamil speech. If a matching voice is missing,
-Jarvis shows a message and keeps text available. Speech quality depends on your OS voice.
+Recognition defaults to local Vosk and needs a separately installed model matching
+the selected language. No Tamil model is bundled. See the
+[offline voice setup](docs/local-commands.md#offline-microphone-input).
+Explicit `VOICE_BACKEND=google` sends audio to Google Web Speech while AI is on.
+Local Vosk never falls back to Google. Speech output uses installed system voices:
+install a Tamil voice for Tamil speech. If input or output is unavailable, Jarvis
+shows a message and keeps text available.
 
 ## Files and screenshots
 
@@ -262,10 +276,13 @@ The last `MAX_HISTORY_TURNS` successful exchanges are retained (default 20).
 `MAX_MESSAGE_CHARS` defaults to 12000. These are character/turn limits, not token budgets.
 Approved facts are included in future AI context (up to 10,000 characters); document and
 task data are sent when tools retrieve them. Search queries go to the search service.
-Uploaded images and speech recognition audio go to the chosen vision/recognition service.
+Explicitly shared images go to the selected vision provider when AI is enabled.
+Microphone audio stays local with Vosk; it goes to Google only when that backend
+is explicitly selected and AI is on. Taught phrases remain in a local SQLite table
+and are not added to AI context. Local device requests are not conversation turns.
 
 `/clear` removes conversation records and pending approvals, keeping tasks, facts,
-documents and reminders. Use their individual commands to manage them. Deleted records
+documents, reminders and taught phrases. Use their individual commands to manage them. Deleted records
 are not a forensic secure erase. `.env` and SQLite files are excluded from Git.
 
 ## Architecture
@@ -274,6 +291,8 @@ are not a forensic secure erase. `.env` and SQLite files are excluded from Git.
 `config.py` loads immutable `Settings` once, with compatibility constants for voice
 and desktop code. `core/conversation.py` owns bounded conversation state, while
 `providers.py` supplies replaceable OpenAI, Anthropic, Gemini and Ollama adapters.
+`tools/local_commands.py` resolves whole device phrases and persisted taught actions
+before lazy provider initialization; `voice/offline.py` decodes local microphone PCM.
 The adapters use `integrations/providers.py` for native tool protocols, streaming,
 cancellation and vision. SQLite persists complete successful turns independently
 of the selected provider; failed or cancelled requests do not alter conversation history.

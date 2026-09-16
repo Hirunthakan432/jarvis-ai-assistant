@@ -3,8 +3,7 @@
 # Desktop GUI and offline speech
 customtkinter>=5.2.0
 pyttsx3>=2.90
-speechrecognition>=3.10.0
-pyaudio>=0.2.14
+-r requirements-voice.txt
 # Optional wake-word support (GUI checkbox or CLI --wake)
 pvporcupine>=3.0.0
 pvrecorder>=1.2.0

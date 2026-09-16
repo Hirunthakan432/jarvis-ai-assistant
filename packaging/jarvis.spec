@@ -6,7 +6,7 @@ root = Path(SPECPATH).parent
 datas = [(str(root / '.env.example'), '.'), (str(root / 'VERSION'), '.')]
 binaries = []
 hiddenimports = []
-for package in ('customtkinter', 'speech_recognition', 'pvporcupine', 'pvrecorder',
+for package in ('customtkinter', 'speech_recognition', 'vosk', 'pvporcupine', 'pvrecorder',
                 'anthropic', 'google.genai', 'openai', 'ddgs', 'pypdf', 'PIL', 'requests'):
     package_datas, package_binaries, package_imports = collect_all(package)
     datas += package_datas

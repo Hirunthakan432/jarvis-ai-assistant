@@ -5,11 +5,21 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class ConfigTests(unittest.TestCase):
+    def test_local_mode_and_voice_settings(self):
+        from config import Settings
+        with patch.dict(os.environ, {'JARVIS_AI_ENABLED': 'false', 'VOICE_BACKEND': 'vosk',
+                                    'VOSK_MODEL_PATH': '/models/english', 'VOSK_MODEL_LANGUAGE': 'en'}):
+            settings = Settings.from_env()
+        self.assertFalse(settings.ai_enabled)
+        self.assertEqual(settings.voice_backend, 'vosk')
+        self.assertEqual(settings.vosk_model_path, '/models/english')
+
     def test_frozen_config_path_and_environment_precedence(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)

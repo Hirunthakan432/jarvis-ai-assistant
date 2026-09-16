@@ -5,10 +5,9 @@ python-dotenv>=1.0,<2
 openai>=1.40,<3
 anthropic>=0.34,<1
 google-genai>=1.0.0
-SpeechRecognition>=3.10,<4
+-r requirements-voice.txt
 pyttsx3>=2.90,<3
 pvporcupine>=3,<4
 pvrecorder>=1.2,<2
-PyAudio>=0.2.14,<0.3
 customtkinter>=5.2,<6
 pyinstaller>=6.11,<7

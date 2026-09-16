@@ -55,9 +55,11 @@ with its existing confirmation requirement.
 | Files | `/folder /home/YOU/Documents` | Configured roots only |
 | Screenshots | GUI **Screenshot** | Existing explicit capture/share prompt; selected AI provider receives image |
 
-With a configured tool-capable AI model, ask naturally: “Mute the volume”,
-“Set brightness to 50%”, “Show my running processes” or “Lock my computer”.
-Slash commands work without an AI API key. No tool can approve its own request.
+Ask naturally: “Mute the volume”, “Set brightness to 50%”, “Show my running
+processes” or “Lock my computer”. These phrases and all slash controls run
+without an AI API key. Teach custom phrases with `/learn`, or disable general AI
+with `/ai off`. See [local commands and offline voice](local-commands.md).
+No tool can approve its own request.
 
 ### Pointer and detailed actions
 

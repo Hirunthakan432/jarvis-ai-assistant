@@ -10,6 +10,7 @@ import customtkinter as ctk
 from assistant import JarvisAssistant
 from config import ASSISTANT_NAME, VOICE_LANGUAGE
 from voice.tts import TextToSpeech
+from tools.local_commands import is_stop
 
 ctk.set_appearance_mode('dark')
 ctk.set_default_color_theme('blue')
@@ -38,7 +39,7 @@ class JarvisGUI(ctk.CTk):
         self._build_ui()
         for m in self.jarvis.history[1:]:
             self._add_message('You' if m['role'] == 'user' else ASSISTANT_NAME, m['content'])
-        self._add_message('System', 'Ready. Type /help for commands. Imported notes and shared images may be sent to your selected AI provider.')
+        self._add_message('System', 'Ready. Device commands work locally. Type /local for examples and teaching, or /ai off to disable AI questions. Type /help for all commands.')
         self.protocol('WM_DELETE_WINDOW', self._close)
         self.after(50, self._poll)
         threading.Thread(target=self._reminders, daemon=True).start()
@@ -87,7 +88,7 @@ class JarvisGUI(ctk.CTk):
         return label
 
     def _send(self):
-        if self.entry.get().strip().lower() in {'/stop', '/control off'}:
+        if is_stop(self.entry.get()):
             self.entry.delete(0, 'end')
             self._stop()
             return
@@ -98,7 +99,7 @@ class JarvisGUI(ctk.CTk):
         self._submit(text)
 
     def _submit(self, text, source='text'):
-        if text.strip().lower() in {'/stop', '/control off'}:
+        if is_stop(text):
             self._stop()
             return
         if self.busy or self.listening: return
@@ -111,7 +112,7 @@ class JarvisGUI(ctk.CTk):
         self.audio_pause.set()
         self.busy = True
         self.send_btn.configure(state='disabled')
-        self.status.configure(text='Thinking…')
+        self.status.configure(text='Working…')
         self._add_message('You', text)
         self.current = self._add_message(ASSISTANT_NAME, '…')
         self.stream_text = self.speech_buffer = ''
@@ -183,7 +184,7 @@ class JarvisGUI(ctk.CTk):
         if self.busy or self.listening: return
         panel = ctk.CTkToplevel(self)
         panel.title('Jarvis • Device controls')
-        panel.geometry('540x450')
+        panel.geometry('540x540')
         panel.resizable(False, False)
         state = ctk.CTkLabel(panel, text='Device control: ' + ('on' if self.jarvis.tools.computer.enabled else 'off'),
                              font=ctk.CTkFont(size=20, weight='bold'))
@@ -195,7 +196,8 @@ class JarvisGUI(ctk.CTk):
             self._submit(command)
         for label, command in [('Enable device control', '/control on'), ('System status', '/computer'),
                                ('Running processes', '/processes'), ('Pending approvals', '/pending'),
-                               ('Mute / unmute', '/media mute')]:
+                               ('Mute / unmute', '/media mute'), ('Local commands / teaching', '/local'),
+                               ('Disable AI questions', '/ai off')]:
             ctk.CTkButton(panel, text=label, command=lambda c=command: send(c)).pack(fill='x', padx=30, pady=4)
         def stop():
             panel.destroy()
@@ -216,6 +218,9 @@ class JarvisGUI(ctk.CTk):
         if path: self._submit('/attach '+path)
 
     def _share_image(self, path):
+        if not self.jarvis.ai_enabled:
+            self._add_message('System', 'AI is off. Use /ai on to allow image questions.')
+            return
         question = simpledialog.askstring('Ask about this image', 'Question (the image will be sent to your selected AI provider):', initialvalue='Explain this screenshot and help me understand any errors.')
         if question: self._submit('/vision '+path+' | '+question)
 
@@ -226,6 +231,9 @@ class JarvisGUI(ctk.CTk):
 
     def _screenshot(self):
         if self.busy or self.listening: return
+        if not self.jarvis.ai_enabled:
+            self._add_message('System', 'AI is off. No screenshot was captured. Use /ai on to allow image questions.')
+            return
         if not messagebox.askokcancel('Share screenshot', 'Capture your screen and send it to the selected AI provider? Close any private information first.'): return
         try:
             from PIL import ImageGrab
@@ -301,7 +309,10 @@ class JarvisGUI(ctk.CTk):
                 self.listening = True
                 self.events.put(('listening', None))
                 stt.language = self.voice_language
+                stt.allow_network = self.jarvis.ai_enabled
                 self.events.put(('heard', stt.listen()))
+                if stt.error:
+                    self.events.put(('notice', stt.error))
                 # Wait until the main thread accepts the result before acquiring audio again.
                 while self.listening and not self.shutdown.wait(0.05): pass
         except Exception:

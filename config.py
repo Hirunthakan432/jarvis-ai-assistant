@@ -62,12 +62,18 @@ class Settings:
     file_roots_json: str = '[]'
     voice_language: str = 'en-US'
     reply_language: str = 'auto'
+    ai_enabled: bool = True
+    voice_backend: str = 'vosk'
+    vosk_model_path: str = str(Path.home() / '.jarvis' / 'models' / 'vosk-en')
+    vosk_model_language: str = 'en'
 
     def __post_init__(self):
         if self.history_max_messages < 2:
             raise ValueError('HISTORY_MAX_MESSAGES must be at least 2')
         if self.max_message_chars < 1:
             raise ValueError('MAX_MESSAGE_CHARS must be positive')
+        if self.voice_backend not in {'vosk', 'google'}:
+            raise ValueError('VOICE_BACKEND must be vosk or google')
 
     @property
     def max_history_turns(self):
@@ -103,6 +109,10 @@ class Settings:
             file_roots_json=os.getenv('JARVIS_FILE_ROOTS_JSON', '[]'),
             voice_language=os.getenv('VOICE_LANGUAGE', 'en-US'),
             reply_language=os.getenv('REPLY_LANGUAGE', 'auto'),
+            ai_enabled=os.getenv('JARVIS_AI_ENABLED', 'true').strip().lower() not in {'false', '0', 'no', 'off'},
+            voice_backend=os.getenv('VOICE_BACKEND', 'vosk').strip().lower(),
+            vosk_model_path=os.getenv('VOSK_MODEL_PATH', str(Path.home() / '.jarvis' / 'models' / 'vosk-en')),
+            vosk_model_language=os.getenv('VOSK_MODEL_LANGUAGE', 'en').strip().lower(),
         )
 
 

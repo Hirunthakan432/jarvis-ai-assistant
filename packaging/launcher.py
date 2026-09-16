@@ -11,6 +11,7 @@ def main():
         with tempfile.TemporaryDirectory() as directory:
             os.environ['JARVIS_CONFIG_PATH'] = str(Path(directory) / '.env')
             os.environ['DEFAULT_LLM'] = 'smoke-test'
+            os.environ['JARVIS_AI_ENABLED'] = 'false'
             from assistant import JarvisAssistant
             from gui import JarvisGUI
             import customtkinter as ctk
@@ -18,6 +19,7 @@ def main():
             import pyttsx3
             import pvporcupine
             import pvrecorder
+            import vosk
             import anthropic
             import google.genai
             import openai
@@ -39,6 +41,12 @@ def main():
             assert 'installed' in bot.chat('/memory')
             assert 'control_enabled' in bot.chat('/computer')
             assert 'off' in bot.chat('/control status')
+            assert 'AI is off' in bot.chat('What is a transformer?')
+            assert 'Learned locally' in bot.chat('/learn quiet time => /media mute')
+            assert 'quiet time' in bot.chat('/learned')
+            assert 'off' in bot.chat('quiet time')
+            assert 'Learned phrase removed' in bot.chat('/unlearn quiet time')
+            assert 'control_enabled' in bot.chat('show system status')
             assert 'saved' in bot.chat('/remind 60 | 0 | Installer reminder')
             note = Path(directory) / 'notes.txt'
             note.write_text('Jarvis installer integration check.', encoding='utf-8')

@@ -5,6 +5,10 @@ import operator
 from datetime import datetime
 
 HELP = '''Offline commands (no API key needed):
+/local — natural device commands and teaching examples
+/local phrase — handle this phrase locally, without AI fallback
+/learn phrase => /command, /learned, /unlearn phrase — teach/inspect/remove local phrases
+/ai on | off | status — allow or disable AI chat and image requests
 /help — show commands
 /time — current local date and time
 /calc (12 + 8) * 3 — arithmetic (+ - * / // % **)
