@@ -10,6 +10,7 @@ import customtkinter as ctk
 from assistant import JarvisAssistant
 from config import ASSISTANT_NAME, VOICE_LANGUAGE
 from voice.tts import TextToSpeech
+from tools.local_commands import is_stop
 
 ctk.set_appearance_mode('dark')
 ctk.set_default_color_theme('blue')
@@ -38,7 +39,7 @@ class JarvisGUI(ctk.CTk):
         self._build_ui()
         for m in self.jarvis.history[1:]:
             self._add_message('You' if m['role'] == 'user' else ASSISTANT_NAME, m['content'])
-        self._add_message('System', 'Ready. Type /help for commands. Imported notes and shared images may be sent to your selected AI provider.')
+        self._add_message('System', 'Ready. Device commands work locally. Type /local for examples and teaching, or /ai off to disable AI questions. Type /help for all commands.')
         self.protocol('WM_DELETE_WINDOW', self._close)
         self.after(50, self._poll)
         threading.Thread(target=self._reminders, daemon=True).start()
@@ -48,6 +49,7 @@ class JarvisGUI(ctk.CTk):
         header = ctk.CTkFrame(self)
         header.pack(fill='x', padx=12, pady=10)
         ctk.CTkLabel(header, text=f'✦ {ASSISTANT_NAME}', font=ctk.CTkFont(size=24, weight='bold')).pack(side='left', padx=15)
+        ctk.CTkButton(header, text='Device controls', width=110, command=self._device_controls).pack(side='left', padx=6)
         self.status = ctk.CTkLabel(header, text='Ready', text_color='#57dbba')
         self.status.pack(side='right', padx=15)
         self.chat_frame = ctk.CTkScrollableFrame(self)
@@ -86,13 +88,20 @@ class JarvisGUI(ctk.CTk):
         return label
 
     def _send(self):
+        if is_stop(self.entry.get()):
+            self.entry.delete(0, 'end')
+            self._stop()
+            return
         if self.busy or self.listening: return
         text = self.entry.get().strip()
         if not text: return
         self.entry.delete(0, 'end')
         self._submit(text)
 
-    def _submit(self, text):
+    def _submit(self, text, source='text'):
+        if is_stop(text):
+            self._stop()
+            return
         if self.busy or self.listening: return
         if text.strip().lower() == '/clear':
             self._clear()
@@ -103,13 +112,17 @@ class JarvisGUI(ctk.CTk):
         self.audio_pause.set()
         self.busy = True
         self.send_btn.configure(state='disabled')
-        self.status.configure(text='Thinking…')
+        self.status.configure(text='Working…')
         self._add_message('You', text)
         self.current = self._add_message(ASSISTANT_NAME, '…')
         self.stream_text = self.speech_buffer = ''
+        command, _, token = text.strip().partition(' ')
+        if source == 'text' and command.lower() == '/confirm' and self.jarvis.tools.needs_focus(token.strip()):
+            self.status.configure(text='Focus the target app — input starts in 4 seconds')
+            self.iconify()
         def work():
             try:
-                reply = self.jarvis.chat(text, on_delta=lambda part: self.events.put(('delta', part)), cancel=cancel)
+                reply = self.jarvis.chat(text, on_delta=lambda part: self.events.put(('delta', part)), cancel=cancel, source=source)
             except Exception:
                 reply = 'Request failed. Check your configuration and try again.'
             self.events.put(('reply', reply))
@@ -141,7 +154,7 @@ class JarvisGUI(ctk.CTk):
                         del self.capture
                 elif kind == 'heard':
                     self.listening = False
-                    if value and not self.busy: self._submit(value)
+                    if value and not self.busy: self._submit(value, source='voice')
                     else: self.status.configure(text='No speech detected' if not value else 'Ready')
                 elif kind == 'listening':
                     self.listening = True
@@ -162,9 +175,34 @@ class JarvisGUI(ctk.CTk):
 
     def _stop(self):
         self.cancel.set()
+        self.jarvis.tools.stop()
         self.tts.stop()
         self.speech_buffer = ''
         self.status.configure(text='Stopping…' if self.busy else 'Stopped')
+
+    def _device_controls(self):
+        if self.busy or self.listening: return
+        panel = ctk.CTkToplevel(self)
+        panel.title('Jarvis • Device controls')
+        panel.geometry('540x540')
+        panel.resizable(False, False)
+        state = ctk.CTkLabel(panel, text='Device control: ' + ('on' if self.jarvis.tools.computer.enabled else 'off'),
+                             font=ctk.CTkFont(size=20, weight='bold'))
+        state.pack(pady=(18, 8))
+        ctk.CTkLabel(panel, text='Enable for this session, then request an action in chat.\nReview its preview and type /confirm TOKEN.\nFor mouse or keyboard input, focus the target app within 4 seconds.\nMove the mouse to a screen corner to stop input.',
+                     wraplength=500, justify='left').pack(padx=20, pady=8)
+        def send(command):
+            panel.destroy()
+            self._submit(command)
+        for label, command in [('Enable device control', '/control on'), ('System status', '/computer'),
+                               ('Running processes', '/processes'), ('Pending approvals', '/pending'),
+                               ('Mute / unmute', '/media mute'), ('Local commands / teaching', '/local'),
+                               ('Disable AI questions', '/ai off')]:
+            ctk.CTkButton(panel, text=label, command=lambda c=command: send(c)).pack(fill='x', padx=30, pady=4)
+        def stop():
+            panel.destroy()
+            self._stop()
+        ctk.CTkButton(panel, text='Stop and disable control', fg_color='#963f4f', command=stop).pack(fill='x', padx=30, pady=8)
 
     def _speech_setting(self):
         if not self.speak_var.get(): self.tts.stop()
@@ -180,6 +218,9 @@ class JarvisGUI(ctk.CTk):
         if path: self._submit('/attach '+path)
 
     def _share_image(self, path):
+        if not self.jarvis.ai_enabled:
+            self._add_message('System', 'AI is off. Use /ai on to allow image questions.')
+            return
         question = simpledialog.askstring('Ask about this image', 'Question (the image will be sent to your selected AI provider):', initialvalue='Explain this screenshot and help me understand any errors.')
         if question: self._submit('/vision '+path+' | '+question)
 
@@ -190,6 +231,9 @@ class JarvisGUI(ctk.CTk):
 
     def _screenshot(self):
         if self.busy or self.listening: return
+        if not self.jarvis.ai_enabled:
+            self._add_message('System', 'AI is off. No screenshot was captured. Use /ai on to allow image questions.')
+            return
         if not messagebox.askokcancel('Share screenshot', 'Capture your screen and send it to the selected AI provider? Close any private information first.'): return
         try:
             from PIL import ImageGrab
@@ -265,7 +309,10 @@ class JarvisGUI(ctk.CTk):
                 self.listening = True
                 self.events.put(('listening', None))
                 stt.language = self.voice_language
+                stt.allow_network = self.jarvis.ai_enabled
                 self.events.put(('heard', stt.listen()))
+                if stt.error:
+                    self.events.put(('notice', stt.error))
                 # Wait until the main thread accepts the result before acquiring audio again.
                 while self.listening and not self.shutdown.wait(0.05): pass
         except Exception:
@@ -278,6 +325,7 @@ class JarvisGUI(ctk.CTk):
         self.shutdown.set()
         self.audio_pause.set()
         self.cancel.set()
+        self.jarvis.tools.stop()
         self.tts.close()
         if hasattr(self, 'capture'): self.capture.cleanup()
         self.destroy()

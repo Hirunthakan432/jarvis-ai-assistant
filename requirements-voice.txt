@@ -1,0 +1,4 @@
+# Local speech model is installed separately; see docs/local-commands.md.
+SpeechRecognition>=3.10,<4
+PyAudio>=0.2.14,<0.3
+vosk>=0.3.45,<0.4

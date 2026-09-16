@@ -5,6 +5,10 @@ import operator
 from datetime import datetime
 
 HELP = '''Offline commands (no API key needed):
+/local — natural device commands and teaching examples
+/local phrase — handle this phrase locally, without AI fallback
+/learn phrase => /command, /learned, /unlearn phrase — teach/inspect/remove local phrases
+/ai on | off | status — allow or disable AI chat and image requests
 /help — show commands
 /time — current local date and time
 /calc (12 + 8) * 3 — arithmetic (+ - * / // % **)
@@ -20,6 +24,17 @@ HELP = '''Offline commands (no API key needed):
 /remind delay_seconds | repeat_seconds | text — schedule notification (repeat 0 = once)
 /reminders and /unremind ID — list/cancel reminders
 /apps, /open alias, /find filename — configured desktop tools
+/control on | off | status — enable device actions for this session
+/stop — disable device control and cancel pending actions
+/computer, /processes — system status and your running processes
+/type text, /key ctrl+s — type text or use a shortcut (4-second focus delay)
+/window minimize|maximize|restore|switch|close|desktop — focused window
+/media volume_up|volume_down|mute|play_pause|next|previous — media keys
+/brightness 50 — set supported displays to 50% (10–100)
+/power lock|sleep|restart|shutdown — OS power request after confirmation
+/browse https://example.com — open a URL in your browser
+/folder /absolute/path — list names inside configured folders
+/pc ACTION {"key":"value"} — detailed device action; see docs/device-control.md
 /devices and /device alias — read configured ESP32 JSON endpoints
 /vision /path/image.png | question — send a selected image to your AI provider
 /language Tamil, English or auto — choose reply language
