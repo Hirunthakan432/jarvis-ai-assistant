@@ -19,7 +19,8 @@ class LocalCommandTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.root = Path(self.tmp.name)
+        # Windows TEMP may use an 8.3 alias; match the canonical configured root.
+        self.root = Path(self.tmp.name).resolve()
         self.settings = replace(SETTINGS, ai_enabled=True, apps_json='{"vscode":["code"]}',
                                 file_roots_json=json.dumps([str(self.root)]))
         self.factory = patch('assistant.create_provider', side_effect=AssertionError('Unexpected AI initialization'))
