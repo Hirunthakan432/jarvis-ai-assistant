@@ -2,6 +2,7 @@
 
 Base: `94213ec6ea2e7ab81b3870d0dfe367cf380dc66b` on `main`.
 Branch: `codex/local-first-intelligence`.
+Pull request: [#7](https://github.com/Hirunthakan432/jarvis-ai-assistant/pull/7).
 
 ## Architecture changes
 
@@ -144,9 +145,19 @@ risk classes are conservative; no class weakens existing mutation confirmation.
 - Native Ollama protocol exercised against a real loopback HTTP fixture; local
   model inference itself was not run. Other provider/OS/audio/device effects were mocked.
 - Windows and Linux volume adapters were tested with fixed API/argv expectations.
-- Core CI and native Windows/Linux installer checks: **pending PR workflow results**.
-  Installer smoke code now covers local semantic previews, structured memory,
-  vector search, diagnostics, capability registration and cancellation.
+- [Core CI](https://github.com/Hirunthakan432/jarvis-ai-assistant/actions/runs/35238845141):
+  **passed on Python 3.10 and 3.12**.
+- [Native installer CI](https://github.com/Hirunthakan432/jarvis-ai-assistant/actions/runs/35238845221):
+  **passed on Windows Server 2022 and Ubuntu 22.04**, using Python 3.11. Each job
+  ran all 167 tests, froze the app, smoke-tested the bundle, built the installer,
+  installed it, smoke-tested the installed app and uninstalled it successfully.
+  Windows `.exe` and Linux `.deb` artifacts are retained for 30 days by that run.
+- These runs verify implementation commit `c619418377ce4b369b2b5ad0d64c90347ae5866f`;
+  this report's final update changes documentation only.
+- Installer smoke checks cover local semantic previews, structured memory,
+  vector search, diagnostics, capability registration and cancellation. Native
+  Windows CI exposed and verified fixes for an isolated environment fixture and
+  a microphone status emoji that could interrupt capture on a cp1252 console.
 
 A one-off container measurement of 1,000 deterministic parses gave median
 0.011 ms and p95 0.014 ms. This measures parsing only on the development runtime;
@@ -218,4 +229,6 @@ calls cannot approve actions, and cloud fallback is never enabled implicitly.
 
 Validation includes the full local suite, a 244-example language dataset, isolated
 offline CLI execution, Ollama HTTP contract tests and mocked Windows/Linux APIs.
-Native CI/installer results and real-hardware limits must be reported separately.
+Native CI also passed full tests, freezing, installer creation, installed-app
+smoke tests and uninstall on Windows Server 2022 and Ubuntu 22.04. Actual Windows
+11/Linux Mint laptops and the hardware/model checks listed above remain untested.
