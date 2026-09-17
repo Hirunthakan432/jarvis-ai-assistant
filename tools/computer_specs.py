@@ -20,6 +20,10 @@ def spec(name, description, properties=None, required=(), mutation=True):
 
 
 COMPUTER_TOOLS = [
+    spec('get_volume', 'Read default output volume; needs pactl on Linux or pycaw on Windows.', mutation=False),
+    spec('get_brightness', 'Read brightness of detected displays.', mutation=False),
+    spec('set_volume', 'Propose default output volume as a percentage.',
+         {'percent': integer(0, 100)}, ['percent']),
     spec('computer_status', 'Read CPU, RAM, disk, battery and device-control status.', mutation=False),
     spec('list_processes', 'List up to 40 processes owned by the current user, ordered by RAM.', mutation=False),
     spec('list_folder', 'List a configured folder; returns names, never file contents.',

@@ -28,6 +28,7 @@ class JarvisGUI(ctk.CTk):
         self.shutdown = threading.Event()
         self.audio_pause = threading.Event()
         self.manual_mic = threading.Event()
+        self.capture_cancel = threading.Event()
         self.wake_enabled = False
         self.busy = False
         self.listening = False
@@ -98,7 +99,7 @@ class JarvisGUI(ctk.CTk):
         self.entry.delete(0, 'end')
         self._submit(text)
 
-    def _submit(self, text, source='text'):
+    def _submit(self, text, source='text', utterance_id=None):
         if is_stop(text):
             self._stop()
             return
@@ -122,7 +123,8 @@ class JarvisGUI(ctk.CTk):
             self.iconify()
         def work():
             try:
-                reply = self.jarvis.chat(text, on_delta=lambda part: self.events.put(('delta', part)), cancel=cancel, source=source)
+                reply = self.jarvis.chat(text, on_delta=lambda part: self.events.put(('delta', part)),
+                                         cancel=cancel, source=source, utterance_id=utterance_id)
             except Exception:
                 reply = 'Request failed. Check your configuration and try again.'
             self.events.put(('reply', reply))
@@ -134,6 +136,7 @@ class JarvisGUI(ctk.CTk):
             while True:
                 kind, value = self.events.get_nowait()
                 if kind == 'delta' and not self.cancel.is_set():
+                    self.status.configure(text=self.jarvis.processing_mode + ' • Responding…')
                     self.stream_text += value
                     self.current.configure(text=self.stream_text)
                     self.speech_buffer += value
@@ -142,19 +145,22 @@ class JarvisGUI(ctk.CTk):
                     if self.speak_var.get():
                         for sentence in pieces: self.tts.enqueue(sentence)
                 elif kind == 'reply':
-                    self.current.configure(text=value)
+                    self.current.configure(text=f'[{self.jarvis.processing_mode}]\n{value}')
                     if self.speak_var.get() and not self.cancel.is_set():
                         self.tts.enqueue(self.speech_buffer if self.stream_text else value)
                     self.speech_buffer = ''
                     self.busy = False
                     self.send_btn.configure(state='normal')
-                    self.status.configure(text='Ready')
+                    self.status.configure(text=self.jarvis.processing_mode + ' • Ready')
                     if hasattr(self, 'capture'):
                         self.capture.cleanup()
                         del self.capture
                 elif kind == 'heard':
                     self.listening = False
-                    if value and not self.busy: self._submit(value, source='voice')
+                    text, identifier = value if isinstance(value, tuple) else (value, None)
+                    if self.capture_cancel.is_set():
+                        text = None
+                    if text and not self.busy: self._submit(text, source='voice', utterance_id=identifier)
                     else: self.status.configure(text='No speech detected' if not value else 'Ready')
                 elif kind == 'listening':
                     self.listening = True
@@ -175,6 +181,8 @@ class JarvisGUI(ctk.CTk):
 
     def _stop(self):
         self.cancel.set()
+        self.capture_cancel.set()
+        self.manual_mic.clear()
         self.jarvis.tools.stop()
         self.tts.stop()
         self.speech_buffer = ''
@@ -306,11 +314,13 @@ class JarvisGUI(ctk.CTk):
                     self.shutdown.wait(0.1)
                     continue
                 if self.shutdown.is_set(): break
+                self.capture_cancel.clear()
                 self.listening = True
                 self.events.put(('listening', None))
                 stt.language = self.voice_language
-                stt.allow_network = self.jarvis.ai_enabled
-                self.events.put(('heard', stt.listen()))
+                stt.allow_network = self.jarvis.allow_voice_network
+                recognized = stt.listen(cancel=self.capture_cancel)
+                self.events.put(('heard', (recognized, stt.utterance_id)))
                 if stt.error:
                     self.events.put(('notice', stt.error))
                 # Wait until the main thread accepts the result before acquiring audio again.
@@ -325,6 +335,7 @@ class JarvisGUI(ctk.CTk):
         self.shutdown.set()
         self.audio_pause.set()
         self.cancel.set()
+        self.capture_cancel.set()
         self.jarvis.tools.stop()
         self.tts.close()
         if hasattr(self, 'capture'): self.capture.cleanup()

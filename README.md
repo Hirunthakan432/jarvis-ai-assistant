@@ -6,6 +6,31 @@ Device controls also understand supported phrases and user-taught commands local
 without an AI model or API. Start with `/local` or read the
 [local commands and offline voice guide](docs/local-commands.md).
 
+## Local-first intelligence (1.3)
+
+Jarvis now routes supported requests through deterministic commands, validated
+user-taught commands and a conservative local semantic grammar before considering
+an AI model. The GUI and CLI show `LOCAL`, `LOCAL AI` or `CLOUD AI` for each reply.
+All device mutations still require the existing single-use confirmation token.
+
+```text
+/control on
+make display half bright
+/confirm TOKEN_FROM_THE_PREVIEW
+/mode LOCAL_ONLY
+/docsearch electromagnetic induction
+/diagnostics
+```
+
+New installations use optional local Ollama with cloud fallback disabled.
+Existing settings keep their selected provider. AI SDKs, speech models and
+optional neural embeddings remain lazy-loaded. Read the
+[local-first architecture, privacy and configuration guide](docs/local-first.md)
+for routing modes, semantic command examples, memory CRUD, retrieval, diagnostics,
+audit retention and Windows 11/Linux Mint setup. The
+[engineering report](docs/engineering-report.md) records changed files, verification,
+security boundaries and remaining device checks.
+
 ## Advanced capabilities
 
 | Capability | How to use it |
@@ -33,8 +58,8 @@ repository. Download and extract the ZIP for your operating system:
 
 | Platform | Installer | Installation |
 |---|---|---|
-| Windows 10/11 x64 | `Jarvis-Setup-1.2.0-x64.exe` | Double-click; follow the setup wizard |
-| Ubuntu 22.04+ / Linux Mint 21+ x64 | `jarvis-ai-assistant_1.2.0_amd64.deb` | `sudo apt install ./jarvis-ai-assistant_1.2.0_amd64.deb` |
+| Windows 10/11 x64 | `Jarvis-Setup-1.3.0-x64.exe` | Double-click; follow the setup wizard |
+| Ubuntu 22.04+ / Linux Mint 21+ x64 | `jarvis-ai-assistant_1.3.0_amd64.deb` | `sudo apt install ./jarvis-ai-assistant_1.3.0_amd64.deb` |
 
 The installers include Python and the desktop dependencies. Windows setup adds
 a Start menu entry and an optional desktop shortcut. Linux adds an application
@@ -70,7 +95,7 @@ python packaging/build_deb.py
 ```
 
 On Windows, install [Inno Setup 6](https://jrsoftware.org/isinfo.php), then run
-`ISCC /DAppVersion=1.2.0 packaging/windows.iss` from a terminal where ISCC is on PATH.
+`ISCC /DAppVersion=1.3.0 packaging/windows.iss` from a terminal where ISCC is on PATH.
 Use the version from `VERSION`. Installers appear in `dist/installers/`.
 The [PyInstaller configuration](https://pyinstaller.org/en/stable/usage.html)
 bundles the GUI theme assets, voice libraries and provider integrations.
@@ -120,6 +145,10 @@ Unused LangChain dependencies have been removed from the full installation.
 
 Set `DEFAULT_LLM` and the corresponding API key in `.env`. A blank `DEFAULT_MODEL`
 uses a provider-specific default; override it with a model available in your account.
+For cloud chat from the new local-first template, also select
+`JARVIS_ROUTING_MODE=CLOUD_ALLOWED` and `JARVIS_LOCAL_AI_ENABLED=false`, or opt into
+the [hybrid fallback configuration](docs/local-first.md). Adding a key alone does
+not enable paid fallback.
 Gemini now uses `google-genai` instead of the retired `google-generativeai` integration.
 
 For local AI, install/start [Ollama](https://docs.ollama.com/), download a model and set:
@@ -157,7 +186,8 @@ Choose **Tamil** for Tamil replies and the `ta-IN` microphone language; English 
 Recognition defaults to local Vosk and needs a separately installed model matching
 the selected language. No Tamil model is bundled. See the
 [offline voice setup](docs/local-commands.md#offline-microphone-input).
-Explicit `VOICE_BACKEND=google` sends audio to Google Web Speech while AI is on.
+Explicit `VOICE_BACKEND=google` sends audio to Google Web Speech while AI is on
+and the routing mode permits internet services.
 Local Vosk never falls back to Google. Speech output uses installed system voices:
 install a Tamil voice for Tamil speech. If input or output is unavailable, Jarvis
 shows a message and keeps text available.
@@ -169,11 +199,13 @@ the model cannot read arbitrary filesystem paths. PDF, TXT, MD, CSV, PY and INO 
 supported. Limits: 10 MB per file, 150 PDF pages, 300,000 extracted characters per
 import. Encrypted PDFs are rejected; scanned PDFs need OCR first.
 
-Documents are stored locally and retrieved using keyword matching or paged reads.
-`/documents` lists IDs; `/detach ID` removes a document. Ask “List my documents”, then
-“Make a quiz from document 1” when a broad question has no matching keywords.
-This is a local text collection, not an embedding/vector database. Relevant passages
-are sent to the selected model when it reads them.
+Documents are stored locally and retrieved using a rebuildable SQLite vector index,
+with keyword search and local paged reads retained. `/documents` lists IDs;
+`/detach ID` removes a document and its vectors; `/docsearch query` searches offline.
+The default encoder has a small lexical-semantic vocabulary; optional local neural
+embeddings are available for source installations. Cloud tools receive only bounded
+relevant passages and cannot page through full documents. See the
+[retrieval configuration and limits](docs/local-first.md#documents).
 
 **Share image** selects an image; **Screenshot** asks before capturing/sharing the
 screen. Screenshot capture availability depends on desktop permissions/platform.
@@ -278,7 +310,7 @@ Approved facts are included in future AI context (up to 10,000 characters); docu
 task data are sent when tools retrieve them. Search queries go to the search service.
 Explicitly shared images go to the selected vision provider when AI is enabled.
 Microphone audio stays local with Vosk; it goes to Google only when that backend
-is explicitly selected and AI is on. Taught phrases remain in a local SQLite table
+is explicitly selected, AI is on and the routing mode permits internet. Taught phrases remain in a local SQLite table
 and are not added to AI context. Local device requests are not conversation turns.
 
 `/clear` removes conversation records and pending approvals, keeping tasks, facts,
@@ -291,9 +323,13 @@ are not a forensic secure erase. `.env` and SQLite files are excluded from Git.
 `config.py` loads immutable `Settings` once, with compatibility constants for voice
 and desktop code. `core/conversation.py` owns bounded conversation state, while
 `providers.py` supplies replaceable OpenAI, Anthropic, Gemini and Ollama adapters.
-`tools/local_commands.py` resolves whole device phrases and persisted taught actions
-before lazy provider initialization; `voice/offline.py` decodes local microphone PCM.
-The adapters use `integrations/providers.py` for native tool protocols, streaming,
+`intelligence/` routes deterministic, taught and semantic commands to normalized
+intents; `capabilities/` validates risk and permissions before the existing handlers.
+`voice/offline.py` decodes local microphone PCM. `devices/` wraps configured devices,
+`retrieval/` supplies local passage vectors, and `memory/structured.py` adds local
+memory categories. `audit/` and `diagnostics/` report safe local metadata.
+Cloud adapters use `integrations/providers.py` and native Ollama uses
+`integrations/ollama.py` for tool protocols, streaming,
 cancellation and vision. SQLite persists complete successful turns independently
 of the selected provider; failed or cancelled requests do not alter conversation history.
 
@@ -307,7 +343,7 @@ limit rounds down to complete user/assistant pairs.
 ```bash
 pip install -r requirements-advanced.txt -r requirements-control.txt customtkinter
 python -m unittest discover -s tests -v
-python -m compileall -q assistant.py config.py providers.py gui.py main.py core memory tools integrations voice packaging
+python -m compileall -q assistant.py config.py providers.py gui.py main.py core memory tools integrations voice packaging intelligence capabilities devices retrieval security diagnostics audit
 ```
 
 Tests cover native provider tool loops, streamed tool arguments, approval boundaries,
@@ -315,6 +351,12 @@ expiry/replay, memory updates, reminders, file limits/retrieval, LAN access boun
 image encoding, voice cancellation and GUI request coordination. Provider responses,
 network devices and audio engines are mocked: live APIs, microphone/speakers, wake word,
 physical ESP32 devices and platform screenshot capture still need testing on your device.
+The local-first tests also include 244 positive/negative language examples,
+transactional migration/rollback, shared cloud passage budgets, a native Ollama
+HTTP fixture, voice deduplication, mocked Windows/Linux volume APIs and a real CLI
+run with model/SDK imports and socket connections denied. See the
+[engineering report](docs/engineering-report.md) for the verified test count and
+installer status for this change.
 
 Implementation references: [DDGS](https://github.com/deedy5/ddgs),
 [Gemini function calling](https://ai.google.dev/gemini-api/docs/function-calling),

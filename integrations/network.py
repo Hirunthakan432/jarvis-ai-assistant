@@ -26,6 +26,16 @@ def validate_device_url(url):
 
 def read_device(name, devices):
     import requests
+    try:
+        return _read_device(name, devices)
+    except requests.Timeout as error:
+        raise ValueError('ESP32 device timed out.') from error
+    except requests.RequestException as error:
+        raise ValueError('ESP32 device unavailable. Check its configured endpoint and LAN connection.') from error
+
+
+def _read_device(name, devices):
+    import requests
     if name not in devices:
         raise ValueError('Unknown device. Configure it in JARVIS_DEVICES_JSON first.')
     url = validate_device_url(devices[name])

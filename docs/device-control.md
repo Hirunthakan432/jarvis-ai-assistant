@@ -1,5 +1,11 @@
 # Device control for Windows 11 and Linux Mint
 
+Version 1.3 adds `/pc get_volume {}`, `/pc set_volume {"percent":50}` and
+`/pc get_brightness {}`, plus local paraphrases such as `make display half bright`.
+Absolute volume uses `pactl` on Linux and the optional `pycaw` dependency on Windows.
+The [local-first guide](local-first.md) explains the capability registry, device
+adapters, risk classes and unchanged confirmation boundaries.
+
 Jarvis can operate your local desktop through individually confirmed actions.
 It runs with your normal account permissions. This does not give ChatGPT remote
 access to your laptop, bypass UAC, or control Android. Install/run this version

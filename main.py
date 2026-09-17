@@ -12,18 +12,26 @@ def main():
     parser.add_argument('--text', action='store_true', help='No microphone or speech dependencies')
     parser.add_argument('--wake', action='store_true', help='Listen for the wake word (voice mode only)')
     parser.add_argument('--no-ai', action='store_true', help='Local commands only; no LLM or vision requests')
+    parser.add_argument('--mode', choices=['LOCAL_ONLY', 'LOCAL_AI', 'HYBRID', 'CLOUD_ALLOWED'], help='Routing policy for this session')
     args = parser.parse_args()
     if args.text and args.wake:
         parser.error('--wake cannot be combined with --text')
-    jarvis = JarvisAssistant(settings=replace(SETTINGS, ai_enabled=False) if args.no_ai else SETTINGS)
+    settings = replace(SETTINGS, ai_enabled=False) if args.no_ai else SETTINGS
+    if args.mode:
+        settings = replace(settings, routing_mode=args.mode,
+                           local_ai_enabled=settings.local_ai_enabled or args.mode in {'LOCAL_AI', 'HYBRID'})
+    jarvis = JarvisAssistant(settings=settings)
     stopped = threading.Event()
     tts = stt = wake = None
     if not args.text:
-        from voice import TextToSpeech, SpeechToText
-        tts, stt = TextToSpeech(language=VOICE_LANGUAGE), SpeechToText(language=VOICE_LANGUAGE)
-        if args.wake:
-            from voice import WakeWordDetector
-            wake = WakeWordDetector()
+        try:
+            from voice import TextToSpeech, SpeechToText
+            tts, stt = TextToSpeech(language=VOICE_LANGUAGE), SpeechToText(language=VOICE_LANGUAGE)
+            if args.wake:
+                from voice import WakeWordDetector
+                wake = WakeWordDetector()
+        except Exception:
+            print('Voice unavailable — text mode remains active.')
     def reminders():
         while not stopped.wait(1):
             try:
@@ -38,21 +46,24 @@ def main():
     try:
         while True:
             source = 'text'
-            if stt: stt.allow_network = jarvis.ai_enabled
+            if stt: stt.allow_network = jarvis.allow_voice_network
             if wake and wake.enabled:
-                if not wake.listen_for_wake_word(stopped): break
-                message = stt.listen() or ''
+                if not wake.listen_for_wake_word(stopped):
+                    wake.enabled = False
+                    continue
+                message = stt.listen(cancel=stopped) or ''
                 source = 'voice'
             else:
                 message = input('You: ').strip()
                 if not message and stt:
                     if tts: tts.stop()
-                    message = stt.listen() or ''
+                    message = stt.listen(cancel=stopped) or ''
                     source = 'voice'
             if message.lower() in {'exit', 'quit', 'bye'}: break
             if not message: continue
-            reply = jarvis.chat(message, source=source)
-            print(f'{ASSISTANT_NAME}: {reply}', flush=True)
+            reply = jarvis.chat(message, source=source,
+                                utterance_id=getattr(stt, 'utterance_id', None) if source == 'voice' else None)
+            print(f'{ASSISTANT_NAME} [{jarvis.processing_mode}]: {reply}', flush=True)
             if tts:
                 language = 'ta-IN' if jarvis.language == 'Tamil' else 'en-US'
                 tts.language = stt.language = language

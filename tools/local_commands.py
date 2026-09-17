@@ -5,6 +5,7 @@ Learned phrases store one structured action, never executable code or a macro.
 """
 import json
 import re
+import time
 from dataclasses import dataclass
 
 from tools.computer_specs import COMPUTER_NAMES
@@ -213,6 +214,9 @@ class LocalCommands:
         with store.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS local_phrases '
                        '(phrase TEXT PRIMARY KEY, display TEXT NOT NULL, action TEXT NOT NULL, arguments TEXT NOT NULL)')
+            db.execute('CREATE TABLE IF NOT EXISTS local_phrase_metadata '
+                       '(phrase TEXT PRIMARY KEY, created_at REAL, updated_at REAL, source TEXT NOT NULL)')
+            db.execute("INSERT OR IGNORE INTO local_phrase_metadata SELECT phrase,NULL,NULL,'migration' FROM local_phrases")
 
     def _validate(self, action):
         if action.name not in self.ALLOWED:
@@ -221,7 +225,7 @@ class LocalCommands:
         if action.name == 'open_app' and action.arguments['name'] not in self.registry.apps:
             raise ValueError('Unknown app alias. Configure it in JARVIS_APPS_JSON first.')
 
-    def learn(self, definition):
+    def learn(self, definition, *, update=False):
         display, separator, command = definition.partition('=>')
         display, command = display.strip(), command.strip()
         if not separator or not display or len(display) > 200 or any(ord(c) < 32 for c in display):
@@ -234,29 +238,44 @@ class LocalCommands:
             raise ValueError('Built-in command wording is reserved. Choose a personal phrase such as study time.')
         if natural_action(cleaned, self.registry.apps):
             raise ValueError('Built-in command wording is reserved. Choose a personal phrase such as study time.')
+        from intelligence.semantic import semantic_action, control_like
+        if control_like(cleaned) or semantic_action(cleaned, self.registry.apps, self.registry.devices):
+            raise ValueError('Built-in command wording is reserved. Choose a personal phrase such as study time.')
         action = explicit_action(command)
         if action is None:
             raise ValueError('Teach one explicit local device command, such as /open vscode or /media mute.')
         self._validate(action)
+        from security.secrets import reject_credentials
+        reject_credentials(display, json.dumps(action.arguments, ensure_ascii=False))
         with self.store.connect() as db:
-            if db.execute('SELECT 1 FROM local_phrases WHERE phrase=?', (phrase,)).fetchone():
+            found = db.execute('SELECT 1 FROM local_phrases WHERE phrase=?', (phrase,)).fetchone()
+            if found and not update:
                 raise ValueError('Phrase already learned. Use /unlearn first to change it.')
-            if db.execute('SELECT count(*) FROM local_phrases').fetchone()[0] >= 500:
+            if update and not found:
+                raise ValueError('Phrase not found. Use /learn first.')
+            if not found and db.execute('SELECT count(*) FROM local_phrases').fetchone()[0] >= 500:
                 raise ValueError('Saved phrase limit reached (500). Remove unused phrases first.')
-            db.execute('INSERT INTO local_phrases VALUES (?, ?, ?, ?)',
+            db.execute('INSERT INTO local_phrases(phrase,display,action,arguments) VALUES (?,?,?,?) '
+                       'ON CONFLICT(phrase) DO UPDATE SET display=excluded.display,action=excluded.action,arguments=excluded.arguments',
                        (phrase, display, action.name, json.dumps(action.arguments, ensure_ascii=False)))
+            db.execute('INSERT INTO local_phrase_metadata VALUES (?,?,?,?) '
+                       'ON CONFLICT(phrase) DO UPDATE SET updated_at=excluded.updated_at,source=excluded.source',
+                       (phrase, time.time(), time.time(), 'user'))
         return f'Learned locally: {display} => {action.name} {json.dumps(action.arguments, ensure_ascii=False)}. Nothing has run; confirmations still apply.'
 
     def learned(self):
         with self.store.connect() as db:
-            rows = db.execute('SELECT display, action, arguments FROM local_phrases ORDER BY phrase').fetchall()
-        return json.dumps([{'phrase': phrase, 'action': name, 'arguments': json.loads(raw)}
-                           for phrase, name, raw in rows], ensure_ascii=False, indent=2)
+            rows = db.execute('SELECT p.display,p.action,p.arguments,m.created_at,m.updated_at,m.source '
+                              'FROM local_phrases p LEFT JOIN local_phrase_metadata m USING(phrase) ORDER BY p.phrase').fetchall()
+        return json.dumps([{'phrase': phrase, 'action': name, 'arguments': json.loads(raw),
+                            'created_at': created, 'updated_at': updated, 'source': source}
+                           for phrase, name, raw, created, updated, source in rows], ensure_ascii=False, indent=2)
 
     def unlearn(self, phrase):
+        phrase = normalize(strip_address(phrase, self.assistant_name))
         with self.store.connect() as db:
-            removed = db.execute('DELETE FROM local_phrases WHERE phrase=?',
-                (normalize(strip_address(phrase, self.assistant_name)),)).rowcount
+            removed = db.execute('DELETE FROM local_phrases WHERE phrase=?', (phrase,)).rowcount
+            db.execute('DELETE FROM local_phrase_metadata WHERE phrase=?', (phrase,))
         return 'Learned phrase removed.' if removed else 'Learned phrase not found.'
 
     def resolve(self, message):

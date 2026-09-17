@@ -1,0 +1,2 @@
+# Optional neural document embeddings for source installations; no model download at runtime.
+sentence-transformers>=3.4,<6

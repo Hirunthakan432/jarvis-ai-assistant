@@ -4,9 +4,7 @@ Listens continuously for "Jarvis" (or "Hey Jarvis" style keywords).
 Requires a free access key from https://console.picovoice.ai/
 """
 
-import struct
-import pvporcupine
-from pvrecorder import PvRecorder
+import threading
 from config import PORCUPINE_ACCESS_KEY, ASSISTANT_NAME
 
 class WakeWordDetector:
@@ -15,6 +13,8 @@ class WakeWordDetector:
         self.porcupine = None
         self.recorder = None
         self.enabled = False
+        self.state = 'DISABLED'
+        self.lock = threading.Lock()
 
         if not self.access_key:
             print("⚠️  PORCUPINE_ACCESS_KEY not found in .env")
@@ -23,6 +23,8 @@ class WakeWordDetector:
             return
 
         try:
+            import pvporcupine
+            from pvrecorder import PvRecorder
             # Built-in keywords that Porcupine supports out of the box.
             # "jarvis" is available as a built-in keyword.
             keywords = keywords or ["jarvis"]
@@ -38,10 +40,11 @@ class WakeWordDetector:
             )
 
             self.enabled = True
+            self.state = 'READY'
             print(f"Wake word ready. Say \"{keywords[0].title()}\" to activate.\n")
 
-        except Exception as e:
-            print(f"⚠️  Failed to initialize wake word: {e}")
+        except Exception:
+            print('Wake word unavailable. Manual input remains active.')
             print("   Falling back to manual mode.\n")
             self.enabled = False
 
@@ -52,10 +55,15 @@ class WakeWordDetector:
         """
         if not self.enabled or self.porcupine is None or self.recorder is None:
             return False
+        if stop_event is not None and stop_event.is_set():
+            return False
+        if not self.lock.acquire(blocking=False):
+            return False
 
         print(f"💤 Listening for wake word (\"{ASSISTANT_NAME}\")... (Ctrl+C to stop)")
 
         try:
+            self.state = 'LISTENING'
             self.recorder.start()
 
             while stop_event is None or not stop_event.is_set():
@@ -63,6 +71,8 @@ class WakeWordDetector:
                 result = self.porcupine.process(pcm)
 
                 if result >= 0:
+                    if stop_event is not None and stop_event.is_set():
+                        return False
                     print(f"\n✨ Wake word detected!")
                     self.recorder.stop()
                     return True
@@ -75,14 +85,22 @@ class WakeWordDetector:
             if self.recorder:
                 self.recorder.stop()
             return False
-        except Exception as e:
-            print(f"Wake word error: {e}")
+        except Exception:
+            print('Wake word unavailable. Manual input remains active.')
+            self.enabled = False
             if self.recorder:
                 try:
                     self.recorder.stop()
                 except Exception:
                     pass
             return False
+        finally:
+            try:
+                self.recorder.stop()
+            except Exception:
+                pass
+            self.state = 'READY' if self.enabled else 'DISABLED'
+            self.lock.release()
 
     def delete(self):
         """Clean up resources."""

@@ -15,6 +15,11 @@ for package in ('customtkinter', 'speech_recognition', 'vosk', 'pvporcupine', 'p
 hiddenimports += ['pyttsx3.drivers.sapi5' if sys.platform == 'win32' else 'pyttsx3.drivers.espeak']
 # Keep GUI automation imports lazy: build analysis can run without DISPLAY.
 hiddenimports += ['pyautogui', 'psutil', 'screen_brightness_control', 'send2trash']
+if sys.platform == 'win32':
+    package_datas, package_binaries, package_imports = collect_all('pycaw')
+    datas += package_datas
+    binaries += package_binaries
+    hiddenimports += package_imports
 hiddenimports += (['pyautogui._pyautogui_win', 'screen_brightness_control.windows', 'send2trash.win', 'wmi']
                   if sys.platform == 'win32' else
                   ['pyautogui._pyautogui_x11', 'screen_brightness_control.linux', 'send2trash.plat_other', 'Xlib.display'])

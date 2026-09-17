@@ -5,9 +5,10 @@ import time
 
 
 class TextToSpeech:
-    def __init__(self, rate=175, volume=1.0, language='en-US'):
+    def __init__(self, rate=175, volume=1.0, language='en-US', utterance_timeout=60):
         self.rate, self.volume, self.language = rate, volume, language
-        self.queue = queue.Queue()
+        self.queue = queue.Queue(maxsize=64)
+        self.utterance_timeout = utterance_timeout
         self.lock = threading.RLock()
         self.cancel = threading.Event()
         self.closed = threading.Event()
@@ -20,13 +21,19 @@ class TextToSpeech:
         done = threading.Event()
         with self.lock:
             if text.strip() and not self.closed.is_set():
-                self.queue.put((text, done))
+                try:
+                    self.queue.put_nowait((text, done))
+                except queue.Full:
+                    self.error = 'Speech queue is full. Remaining text is available on screen.'
+                    done.set()
             else:
                 done.set()
         return done
 
     def speak(self, text):
-        self.enqueue(text).wait()
+        if not self.enqueue(text).wait(self.utterance_timeout + 5):
+            self.error = 'Speech output timed out. Text mode remains active.'
+            self.stop()
 
     def stop(self):
         self.cancel.set()
@@ -50,7 +57,7 @@ class TextToSpeech:
             engine.setProperty('rate', self.rate)
             engine.setProperty('volume', self.volume)
             engine.startLoop(False)
-            active, selected_language = None, None
+            active, selected_language, active_since = None, None, 0
             while not self.closed.is_set():
                 if self.cancel.is_set():
                     engine.stop()
@@ -80,8 +87,18 @@ class TextToSpeech:
                                 continue
                             selected_language = self.language
                         self.speaking.set()
+                        active_since = time.monotonic()
                         engine.say(text)
+                    else:
+                        self.closed.wait(0.1)
+                        continue
                 engine.iterate()
+                if active is not None and time.monotonic() - active_since > self.utterance_timeout:
+                    engine.stop()
+                    self.error = 'Speech output timed out. Text mode remains active.'
+                    active.set()
+                    active = None
+                    self.speaking.clear()
                 if active is not None and not engine.isBusy():
                     active.set()
                     active = None

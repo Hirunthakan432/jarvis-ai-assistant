@@ -68,7 +68,8 @@ def create_provider(settings: Settings) -> LLMProvider | None:
     if provider == 'openai' and settings.openai_api_key:
         return OpenAIProvider(settings.openai_api_key, settings.model)
     if provider == 'ollama':
-        return OpenAIProvider('ollama', settings.model, settings.ollama_base_url)
+        from integrations.ollama import OllamaProvider
+        return OllamaProvider(settings.ollama_base_url, settings.model, settings.ollama_timeout)
     if provider == 'anthropic' and settings.anthropic_api_key:
         return AnthropicProvider(settings.anthropic_api_key, settings.model)
     if provider == 'gemini' and settings.google_api_key:

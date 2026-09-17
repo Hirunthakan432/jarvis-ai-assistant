@@ -52,6 +52,17 @@ def main():
             note.write_text('Jarvis installer integration check.', encoding='utf-8')
             assert 'Imported #1' in bot.chat('/attach ' + str(note))
             assert bot.memory.read_document(1)['text'] == note.read_text(encoding='utf-8')
+            assert 'local_vector' in bot.chat('/docsearch installer')
+            assert 'saved' in bot.chat('/memory create study_preferences style=visual')
+            assert 'visual' in bot.chat('/memory read study_preferences style')
+            assert 'set_brightness' in bot.chat('/capabilities')
+            assert 'database' in bot.chat('/diagnostics')
+            assert bot.processing_mode == 'LOCAL'
+            bot.chat('/control on')
+            assert 'confirmation_required' in bot.chat('make display half bright')
+            bot.chat('/stop')
+            assert not bot.tools.pending
+            assert 'general_question' not in str(bot.tools.audit_log.read())
             # Exercise bundled Tk libraries, theme JSON and fonts without audio.
             window = ctk.CTk()
             window.withdraw()
