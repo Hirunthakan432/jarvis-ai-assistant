@@ -1,11 +1,11 @@
 """Conservative credential filtering; not a general sensitive-data classifier."""
 import re
 
-LABEL = r'(?:password|passwd|passphrase|api[_ -]?key|access[_ -]?token|auth(?:orization)?|secret|private[_ -]?key)'
+LABEL = r'(?:password|passwd|passphrase|api[_ -]?key|(?:access|refresh|session)[_ -]?token|token|auth(?:orization)?|secret|private[_ -]?key)'
 PATTERNS = [
     re.compile(r'\b(?:sk-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{10,}|AIza[A-Za-z0-9_-]{20,})\b'),
     re.compile(r'(?i)\b(?:bearer|basic)\s+[A-Za-z0-9+/_.=-]{6,}'),
-    re.compile(r'(?i)\b' + LABEL + r'\s*(?:[=:]|\bis\b)\s*[^\n,;]+'),
+    re.compile(r'(?i)\b' + LABEL + r'''\b["']?\s*(?:[=:]|\bis\b)\s*[^\n,;]+'''),
     re.compile(r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]*'),
     re.compile(r'(?i)/(?:confirm|cancel)\s+\S+'),
     re.compile(r'(?i)(["\']token["\']\s*:\s*)["\'][^"\']+["\']'),

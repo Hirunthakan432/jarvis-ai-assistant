@@ -95,7 +95,9 @@ class StorageUpgradeTests(unittest.TestCase):
 
     def test_secret_rejection_redaction_and_legacy_preservation(self):
         for key,value in [('api_key','hidden'),('password','hidden'),('credential','sk-'+'a'*30),
-                          ('note','my password is hunter2'),('note','Authorization: Bearer abcd1234')]:
+                          ('note','my password is hunter2'),('note','Authorization: Bearer abcd1234'),
+                          ('token','hidden'),('refresh_token','hidden'),
+                          ('note','{"password": "hidden"}'),('note',"{'api_key': 'hidden'}")]:
             with self.subTest(key=key,value=value):
                 with self.assertRaises(ValueError):
                     self.bot.memory.remember(key,value)
@@ -108,6 +110,9 @@ class StorageUpgradeTests(unittest.TestCase):
         self.bot.store.save_turn('password=hello', 'Use /confirm deadbeef', 10)
         self.assertNotIn('hello', str(self.bot.store.history(10)))
         self.assertNotIn('deadbeef', str(self.bot.store.history(10)))
+        self.bot.store.save_turn('{"password": "json-secret"}', 'refresh_token: rotating-secret', 10)
+        self.assertNotIn('json-secret', str(self.bot.store.history(10)))
+        self.assertNotIn('rotating-secret', str(self.bot.store.history(10)))
         self.assertNotIn('Learned locally', self.bot.chat('/learn secret time => /type sk-'+'a'*30))
 
     def test_builtin_semantic_retrieval_and_source_offsets(self):
