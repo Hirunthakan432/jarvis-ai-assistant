@@ -1,6 +1,7 @@
 """Voice state recovery, OS volume adapters, timeout and packaging hooks."""
 from dataclasses import replace
 import importlib
+import io
 import json
 from pathlib import Path
 import queue
@@ -81,7 +82,10 @@ class RuntimeUpgradeTests(unittest.TestCase):
                 stt.microphone.__enter__=Mock(return_value=Mock());stt.microphone.__exit__=Mock(return_value=False)
                 stt.recognizer=Mock();stt.timeout=1;stt.phrase_time_limit=2;stt.transcribe=Mock(return_value='mute')
                 stt.recognizer.listen.side_effect=sr.WaitTimeoutError()
-                self.assertIsNone(stt.listen())
+                with io.TextIOWrapper(io.BytesIO(),encoding='cp1252') as console, patch('sys.stdout',console):
+                    self.assertIsNone(stt.listen())
+                stt.recognizer.listen.assert_called_once()
+                self.assertIsNone(stt.error)
                 self.assertEqual(stt.state,'READY')
                 self.assertFalse(stt.capture_lock.locked())
                 cancel=threading.Event()
@@ -108,7 +112,8 @@ class RuntimeUpgradeTests(unittest.TestCase):
         for changes in [{'routing_mode':'UNKNOWN'},{'ollama_timeout':0},{'audit_retention_days':0},
                         {'audit_max_rows':0},{'embedding_backend':'cloud'},{'voice_duplicate_seconds':0}]:
             with self.assertRaises(ValueError):replace(SETTINGS,**changes)
-        with patch.dict('os.environ',{'JARVIS_ROUTING_MODE':'local_only','JARVIS_ALLOW_CLOUD_FALLBACK':'false'},clear=True):
+        with patch('config.Path.home',return_value=Path(tempfile.gettempdir())), \
+             patch.dict('os.environ',{'JARVIS_ROUTING_MODE':'local_only','JARVIS_ALLOW_CLOUD_FALLBACK':'false'},clear=True):
             settings=Settings.from_env()
             self.assertEqual(settings.routing_mode,'LOCAL_ONLY')
             self.assertFalse(settings.allow_cloud_fallback)

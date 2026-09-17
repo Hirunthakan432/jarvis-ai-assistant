@@ -65,7 +65,7 @@ class SpeechToText:
             self.state = 'LISTENING'
             self.utterance_id = uuid.uuid4().hex
             with self.microphone as source:
-                print(f"🎤 Listening... (speak now)")
+                print("Listening... (speak now)")
                 audio = self.recognizer.listen(
                     source,
                     timeout=self.timeout,
