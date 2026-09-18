@@ -2,6 +2,7 @@
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
+from security.secrets import redact
 
 
 class MemoryStore:
@@ -28,6 +29,7 @@ class MemoryStore:
             {'role': 'user', 'content': user}, {'role': 'assistant', 'content': reply})]
 
     def save_turn(self, user, reply, limit):
+        user, reply = redact(user), redact(reply)
         with self.connect() as db:
             db.execute('INSERT INTO turns (user, assistant) VALUES (?, ?)', (user, reply))
             db.execute('DELETE FROM turns WHERE id NOT IN (SELECT id FROM turns ORDER BY id DESC LIMIT ?)', (limit,))

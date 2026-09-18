@@ -9,6 +9,15 @@ HELP = '''Offline commands (no API key needed):
 /local phrase — handle this phrase locally, without AI fallback
 /learn phrase => /command, /learned, /unlearn phrase — teach/inspect/remove local phrases
 /ai on | off | status — allow or disable AI chat and image requests
+/mode LOCAL_ONLY|LOCAL_AI|HYBRID|CLOUD_ALLOWED — inspect/change session routing
+/capabilities — inspect action schemas, risk, permissions and timeouts
+/diagnostics [--probe] — local inventory; --probe checks configured endpoints
+/audit — local action metadata with configured retention
+/relearn phrase => /command — update an existing learned command
+/docsearch query, /reindex — local passage search and rebuildable vector index
+/memory categories — structured preferences, settings, projects, facts and aliases
+/memory create|update CATEGORY key=value, /memory delete CATEGORY key — memory CRUD
+/device-capabilities — supported actions for configured devices
 /help — show commands
 /time — current local date and time
 /calc (12 + 8) * 3 — arithmetic (+ - * / // % **)

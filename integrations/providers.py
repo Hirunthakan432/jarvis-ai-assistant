@@ -24,7 +24,9 @@ def call_tool(registry, name, arguments, on_event, cancel):
         result = {'status': 'error', 'error': 'Tool arguments must be a JSON object.'}
     if on_event:
         on_event(name, result)
-    return json.dumps(result, ensure_ascii=False)
+    # The UI receives the real single-use token, but the model does not need it.
+    from security.secrets import redact_data
+    return json.dumps(redact_data(result), ensure_ascii=False)
 
 
 def generate(client, provider, model, messages, registry, on_delta=None, cancel=None, on_event=None):

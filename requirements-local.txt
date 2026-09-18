@@ -1,3 +1,4 @@
 # Local typed commands and device controls; no AI SDK needed.
 python-dotenv>=1.0,<2
+requests>=2.32,<3
 -r requirements-control.txt

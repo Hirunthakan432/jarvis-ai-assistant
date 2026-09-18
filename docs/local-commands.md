@@ -1,5 +1,9 @@
 # Local device commands and teaching
 
+Version 1.3 extends this grammar with semantic paraphrases, normalized intents,
+local reminders/sensors, routing modes and `/relearn`. See the
+[local-first guide](local-first.md) for the complete new behavior and settings.
+
 Jarvis understands supported device phrases on your computer **before any AI
 provider is initialized or called**. The command engine uses a small grammar and
 your saved phrase mappings. It needs no LLM, GPU, API key or training server.

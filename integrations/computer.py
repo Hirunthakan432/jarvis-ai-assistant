@@ -36,12 +36,22 @@ class ComputerControl:
         self._session.set()
 
     def check(self, session=None):
+        from security.execution import CURRENT_DEADLINE
+        deadline = CURRENT_DEADLINE.get()
+        if deadline:
+            deadline.check()
         if (session or self._session).is_set():
             raise ValueError('Device control is off or stopped. Some input may already have run. Use /control on to enable it again.')
 
     def pause(self, session, seconds):
+        from security.execution import CURRENT_DEADLINE
+        deadline = CURRENT_DEADLINE.get()
+        if deadline:
+            seconds = min(seconds, deadline.remaining)
         if session.wait(seconds):
             self.check(session)
+        if deadline:
+            deadline.check()
 
     def _gui(self):
         if platform.system() not in {'Windows', 'Linux'}:
@@ -114,6 +124,12 @@ class ComputerControl:
     def run(self, name, a, approved=None, session=None):
         session = session or self._session
         self.check(session)
+        if name in {'get_volume', 'set_volume'}:
+            from integrations.audio import volume
+            return volume(a.get('percent'))
+        if name == 'get_brightness':
+            import screen_brightness_control as brightness
+            return {'percent': brightness.get_brightness()}
         if name == 'list_processes':
             import psutil
             user = psutil.Process().username()

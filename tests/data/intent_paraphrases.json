@@ -1,0 +1,1528 @@
+[
+  {
+    "text": "brightness 50",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "screen to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "make display half bright",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "set brightness at 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Set brightness to 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Make my screen 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Change brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Put the display at 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "adjust screen brightness to fifty percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "set the display brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please brightness 50",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please screen to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please make display half bright",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please set brightness at 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please Set brightness to 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please Make my screen 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please Change brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please Put the display at 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please adjust screen brightness to fifty percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please set the display brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, brightness 50",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, screen to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, make display half bright",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, set brightness at 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, Set brightness to 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, Make my screen 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, Change brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, Put the display at 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, adjust screen brightness to fifty percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, set the display brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you brightness 50",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you screen to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you make display half bright",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you set brightness at 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you Set brightness to 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you Make my screen 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you Change brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you Put the display at 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you adjust screen brightness to fifty percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you set the display brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please brightness 50",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please screen to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please make display half bright",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please set brightness at 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please Set brightness to 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please Make my screen 50 percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please Change brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please Put the display at 50%",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please adjust screen brightness to fifty percent",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Hey Jarvis, please set the display brightness to fifty",
+    "name": "set_brightness",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "set volume at 50 percent",
+    "name": "set_volume",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "volume to fifty",
+    "name": "set_volume",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "check volume",
+    "name": "get_volume",
+    "parameters": {}
+  },
+  {
+    "text": "check brightness",
+    "name": "get_brightness",
+    "parameters": {}
+  },
+  {
+    "text": "mute the volume",
+    "name": "media_control",
+    "parameters": {
+      "action": "mute"
+    }
+  },
+  {
+    "text": "turn the volume down",
+    "name": "media_control",
+    "parameters": {
+      "action": "volume_down"
+    }
+  },
+  {
+    "text": "raise the volume",
+    "name": "media_control",
+    "parameters": {
+      "action": "volume_up"
+    }
+  },
+  {
+    "text": "skip to the next song",
+    "name": "media_control",
+    "parameters": {
+      "action": "next"
+    }
+  },
+  {
+    "text": "go to the previous song",
+    "name": "media_control",
+    "parameters": {
+      "action": "previous"
+    }
+  },
+  {
+    "text": "toggle music playback",
+    "name": "media_control",
+    "parameters": {
+      "action": "play_pause"
+    }
+  },
+  {
+    "text": "hide the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "minimize"
+    }
+  },
+  {
+    "text": "show my desktop",
+    "name": "window_action",
+    "parameters": {
+      "action": "desktop"
+    }
+  },
+  {
+    "text": "restore the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "restore"
+    }
+  },
+  {
+    "text": "close the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "close"
+    }
+  },
+  {
+    "text": "power off my laptop",
+    "name": "power_control",
+    "parameters": {
+      "action": "shutdown"
+    }
+  },
+  {
+    "text": "lock the pc",
+    "name": "power_control",
+    "parameters": {
+      "action": "lock"
+    }
+  },
+  {
+    "text": "put the pc into sleep",
+    "name": "power_control",
+    "parameters": {
+      "action": "sleep"
+    }
+  },
+  {
+    "text": "reboot my computer",
+    "name": "power_control",
+    "parameters": {
+      "action": "restart"
+    }
+  },
+  {
+    "text": "bring up vscode",
+    "name": "open_app",
+    "parameters": {
+      "name": "vscode"
+    }
+  },
+  {
+    "text": "launch application VSCODE",
+    "name": "open_app",
+    "parameters": {
+      "name": "vscode"
+    }
+  },
+  {
+    "text": "read meter",
+    "name": "read_device",
+    "parameters": {
+      "name": "meter"
+    }
+  },
+  {
+    "text": "get readings from meter",
+    "name": "read_device",
+    "parameters": {
+      "name": "meter"
+    }
+  },
+  {
+    "text": "show readings from weather_station",
+    "name": "read_device",
+    "parameters": {
+      "name": "weather_station"
+    }
+  },
+  {
+    "text": "list my processes",
+    "name": "list_processes",
+    "parameters": {}
+  },
+  {
+    "text": "terminate process pid 123",
+    "name": "terminate_process",
+    "parameters": {
+      "pid": 123
+    }
+  },
+  {
+    "text": "use shortcut control plus s",
+    "name": "hotkey",
+    "parameters": {
+      "keys": "ctrl+s"
+    }
+  },
+  {
+    "text": "position pointer at 200, 300",
+    "name": "mouse_move",
+    "parameters": {
+      "x": 200,
+      "y": 300
+    }
+  },
+  {
+    "text": "remind me in five minutes to Study ICT",
+    "name": "add_reminder",
+    "parameters": {
+      "text": "Study ICT",
+      "delay_seconds": 300
+    }
+  },
+  {
+    "text": "cancel reminder number 2",
+    "name": "cancel_reminder",
+    "parameters": {
+      "id": 2
+    }
+  },
+  {
+    "text": "show my reminders",
+    "name": "list_reminders",
+    "parameters": {}
+  },
+  {
+    "text": "find my notes for induction",
+    "name": "search_documents",
+    "parameters": {
+      "query": "induction"
+    }
+  },
+  {
+    "text": "type Hello  World!",
+    "name": "type_text",
+    "parameters": {
+      "text": "Hello  World!"
+    }
+  },
+  {
+    "text": "scroll down three steps",
+    "name": "scroll",
+    "parameters": {
+      "direction": "down",
+      "steps": 3
+    }
+  },
+  {
+    "text": "double click at 200, 300",
+    "name": "mouse_click",
+    "parameters": {
+      "x": 200,
+      "y": 300,
+      "button": "left",
+      "clicks": 2
+    }
+  },
+  {
+    "text": "please set volume at 50 percent",
+    "name": "set_volume",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please volume to fifty",
+    "name": "set_volume",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "please check volume",
+    "name": "get_volume",
+    "parameters": {}
+  },
+  {
+    "text": "please check brightness",
+    "name": "get_brightness",
+    "parameters": {}
+  },
+  {
+    "text": "please mute the volume",
+    "name": "media_control",
+    "parameters": {
+      "action": "mute"
+    }
+  },
+  {
+    "text": "please turn the volume down",
+    "name": "media_control",
+    "parameters": {
+      "action": "volume_down"
+    }
+  },
+  {
+    "text": "please raise the volume",
+    "name": "media_control",
+    "parameters": {
+      "action": "volume_up"
+    }
+  },
+  {
+    "text": "please skip to the next song",
+    "name": "media_control",
+    "parameters": {
+      "action": "next"
+    }
+  },
+  {
+    "text": "please go to the previous song",
+    "name": "media_control",
+    "parameters": {
+      "action": "previous"
+    }
+  },
+  {
+    "text": "please toggle music playback",
+    "name": "media_control",
+    "parameters": {
+      "action": "play_pause"
+    }
+  },
+  {
+    "text": "please hide the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "minimize"
+    }
+  },
+  {
+    "text": "please show my desktop",
+    "name": "window_action",
+    "parameters": {
+      "action": "desktop"
+    }
+  },
+  {
+    "text": "please restore the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "restore"
+    }
+  },
+  {
+    "text": "please close the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "close"
+    }
+  },
+  {
+    "text": "please power off my laptop",
+    "name": "power_control",
+    "parameters": {
+      "action": "shutdown"
+    }
+  },
+  {
+    "text": "please lock the pc",
+    "name": "power_control",
+    "parameters": {
+      "action": "lock"
+    }
+  },
+  {
+    "text": "please put the pc into sleep",
+    "name": "power_control",
+    "parameters": {
+      "action": "sleep"
+    }
+  },
+  {
+    "text": "please reboot my computer",
+    "name": "power_control",
+    "parameters": {
+      "action": "restart"
+    }
+  },
+  {
+    "text": "please bring up vscode",
+    "name": "open_app",
+    "parameters": {
+      "name": "vscode"
+    }
+  },
+  {
+    "text": "please launch application VSCODE",
+    "name": "open_app",
+    "parameters": {
+      "name": "vscode"
+    }
+  },
+  {
+    "text": "please read meter",
+    "name": "read_device",
+    "parameters": {
+      "name": "meter"
+    }
+  },
+  {
+    "text": "please get readings from meter",
+    "name": "read_device",
+    "parameters": {
+      "name": "meter"
+    }
+  },
+  {
+    "text": "please show readings from weather_station",
+    "name": "read_device",
+    "parameters": {
+      "name": "weather_station"
+    }
+  },
+  {
+    "text": "please list my processes",
+    "name": "list_processes",
+    "parameters": {}
+  },
+  {
+    "text": "please terminate process pid 123",
+    "name": "terminate_process",
+    "parameters": {
+      "pid": 123
+    }
+  },
+  {
+    "text": "please use shortcut control plus s",
+    "name": "hotkey",
+    "parameters": {
+      "keys": "ctrl+s"
+    }
+  },
+  {
+    "text": "please position pointer at 200, 300",
+    "name": "mouse_move",
+    "parameters": {
+      "x": 200,
+      "y": 300
+    }
+  },
+  {
+    "text": "please remind me in five minutes to Study ICT",
+    "name": "add_reminder",
+    "parameters": {
+      "text": "Study ICT",
+      "delay_seconds": 300
+    }
+  },
+  {
+    "text": "please cancel reminder number 2",
+    "name": "cancel_reminder",
+    "parameters": {
+      "id": 2
+    }
+  },
+  {
+    "text": "please show my reminders",
+    "name": "list_reminders",
+    "parameters": {}
+  },
+  {
+    "text": "please find my notes for induction",
+    "name": "search_documents",
+    "parameters": {
+      "query": "induction"
+    }
+  },
+  {
+    "text": "please type Hello  World!",
+    "name": "type_text",
+    "parameters": {
+      "text": "Hello  World!"
+    }
+  },
+  {
+    "text": "please scroll down three steps",
+    "name": "scroll",
+    "parameters": {
+      "direction": "down",
+      "steps": 3
+    }
+  },
+  {
+    "text": "please double click at 200, 300",
+    "name": "mouse_click",
+    "parameters": {
+      "x": 200,
+      "y": 300,
+      "button": "left",
+      "clicks": 2
+    }
+  },
+  {
+    "text": "Jarvis, set volume at 50 percent",
+    "name": "set_volume",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, volume to fifty",
+    "name": "set_volume",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "Jarvis, check volume",
+    "name": "get_volume",
+    "parameters": {}
+  },
+  {
+    "text": "Jarvis, check brightness",
+    "name": "get_brightness",
+    "parameters": {}
+  },
+  {
+    "text": "Jarvis, mute the volume",
+    "name": "media_control",
+    "parameters": {
+      "action": "mute"
+    }
+  },
+  {
+    "text": "Jarvis, turn the volume down",
+    "name": "media_control",
+    "parameters": {
+      "action": "volume_down"
+    }
+  },
+  {
+    "text": "Jarvis, raise the volume",
+    "name": "media_control",
+    "parameters": {
+      "action": "volume_up"
+    }
+  },
+  {
+    "text": "Jarvis, skip to the next song",
+    "name": "media_control",
+    "parameters": {
+      "action": "next"
+    }
+  },
+  {
+    "text": "Jarvis, go to the previous song",
+    "name": "media_control",
+    "parameters": {
+      "action": "previous"
+    }
+  },
+  {
+    "text": "Jarvis, toggle music playback",
+    "name": "media_control",
+    "parameters": {
+      "action": "play_pause"
+    }
+  },
+  {
+    "text": "Jarvis, hide the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "minimize"
+    }
+  },
+  {
+    "text": "Jarvis, show my desktop",
+    "name": "window_action",
+    "parameters": {
+      "action": "desktop"
+    }
+  },
+  {
+    "text": "Jarvis, restore the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "restore"
+    }
+  },
+  {
+    "text": "Jarvis, close the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "close"
+    }
+  },
+  {
+    "text": "Jarvis, power off my laptop",
+    "name": "power_control",
+    "parameters": {
+      "action": "shutdown"
+    }
+  },
+  {
+    "text": "Jarvis, lock the pc",
+    "name": "power_control",
+    "parameters": {
+      "action": "lock"
+    }
+  },
+  {
+    "text": "Jarvis, put the pc into sleep",
+    "name": "power_control",
+    "parameters": {
+      "action": "sleep"
+    }
+  },
+  {
+    "text": "Jarvis, reboot my computer",
+    "name": "power_control",
+    "parameters": {
+      "action": "restart"
+    }
+  },
+  {
+    "text": "Jarvis, bring up vscode",
+    "name": "open_app",
+    "parameters": {
+      "name": "vscode"
+    }
+  },
+  {
+    "text": "Jarvis, launch application VSCODE",
+    "name": "open_app",
+    "parameters": {
+      "name": "vscode"
+    }
+  },
+  {
+    "text": "Jarvis, read meter",
+    "name": "read_device",
+    "parameters": {
+      "name": "meter"
+    }
+  },
+  {
+    "text": "Jarvis, get readings from meter",
+    "name": "read_device",
+    "parameters": {
+      "name": "meter"
+    }
+  },
+  {
+    "text": "Jarvis, show readings from weather_station",
+    "name": "read_device",
+    "parameters": {
+      "name": "weather_station"
+    }
+  },
+  {
+    "text": "Jarvis, list my processes",
+    "name": "list_processes",
+    "parameters": {}
+  },
+  {
+    "text": "Jarvis, terminate process pid 123",
+    "name": "terminate_process",
+    "parameters": {
+      "pid": 123
+    }
+  },
+  {
+    "text": "Jarvis, use shortcut control plus s",
+    "name": "hotkey",
+    "parameters": {
+      "keys": "ctrl+s"
+    }
+  },
+  {
+    "text": "Jarvis, position pointer at 200, 300",
+    "name": "mouse_move",
+    "parameters": {
+      "x": 200,
+      "y": 300
+    }
+  },
+  {
+    "text": "Jarvis, remind me in five minutes to Study ICT",
+    "name": "add_reminder",
+    "parameters": {
+      "text": "Study ICT",
+      "delay_seconds": 300
+    }
+  },
+  {
+    "text": "Jarvis, cancel reminder number 2",
+    "name": "cancel_reminder",
+    "parameters": {
+      "id": 2
+    }
+  },
+  {
+    "text": "Jarvis, show my reminders",
+    "name": "list_reminders",
+    "parameters": {}
+  },
+  {
+    "text": "Jarvis, find my notes for induction",
+    "name": "search_documents",
+    "parameters": {
+      "query": "induction"
+    }
+  },
+  {
+    "text": "Jarvis, type Hello  World!",
+    "name": "type_text",
+    "parameters": {
+      "text": "Hello  World!"
+    }
+  },
+  {
+    "text": "Jarvis, scroll down three steps",
+    "name": "scroll",
+    "parameters": {
+      "direction": "down",
+      "steps": 3
+    }
+  },
+  {
+    "text": "Jarvis, double click at 200, 300",
+    "name": "mouse_click",
+    "parameters": {
+      "x": 200,
+      "y": 300,
+      "button": "left",
+      "clicks": 2
+    }
+  },
+  {
+    "text": "could you set volume at 50 percent",
+    "name": "set_volume",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you volume to fifty",
+    "name": "set_volume",
+    "parameters": {
+      "percent": 50
+    }
+  },
+  {
+    "text": "could you check volume",
+    "name": "get_volume",
+    "parameters": {}
+  },
+  {
+    "text": "could you check brightness",
+    "name": "get_brightness",
+    "parameters": {}
+  },
+  {
+    "text": "could you mute the volume",
+    "name": "media_control",
+    "parameters": {
+      "action": "mute"
+    }
+  },
+  {
+    "text": "could you turn the volume down",
+    "name": "media_control",
+    "parameters": {
+      "action": "volume_down"
+    }
+  },
+  {
+    "text": "could you raise the volume",
+    "name": "media_control",
+    "parameters": {
+      "action": "volume_up"
+    }
+  },
+  {
+    "text": "could you skip to the next song",
+    "name": "media_control",
+    "parameters": {
+      "action": "next"
+    }
+  },
+  {
+    "text": "could you go to the previous song",
+    "name": "media_control",
+    "parameters": {
+      "action": "previous"
+    }
+  },
+  {
+    "text": "could you toggle music playback",
+    "name": "media_control",
+    "parameters": {
+      "action": "play_pause"
+    }
+  },
+  {
+    "text": "could you hide the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "minimize"
+    }
+  },
+  {
+    "text": "could you show my desktop",
+    "name": "window_action",
+    "parameters": {
+      "action": "desktop"
+    }
+  },
+  {
+    "text": "could you restore the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "restore"
+    }
+  },
+  {
+    "text": "could you close the current window",
+    "name": "window_action",
+    "parameters": {
+      "action": "close"
+    }
+  },
+  {
+    "text": "could you power off my laptop",
+    "name": "power_control",
+    "parameters": {
+      "action": "shutdown"
+    }
+  },
+  {
+    "text": "could you lock the pc",
+    "name": "power_control",
+    "parameters": {
+      "action": "lock"
+    }
+  },
+  {
+    "text": "could you put the pc into sleep",
+    "name": "power_control",
+    "parameters": {
+      "action": "sleep"
+    }
+  },
+  {
+    "text": "could you reboot my computer",
+    "name": "power_control",
+    "parameters": {
+      "action": "restart"
+    }
+  },
+  {
+    "text": "could you bring up vscode",
+    "name": "open_app",
+    "parameters": {
+      "name": "vscode"
+    }
+  },
+  {
+    "text": "could you launch application VSCODE",
+    "name": "open_app",
+    "parameters": {
+      "name": "vscode"
+    }
+  },
+  {
+    "text": "could you read meter",
+    "name": "read_device",
+    "parameters": {
+      "name": "meter"
+    }
+  },
+  {
+    "text": "could you get readings from meter",
+    "name": "read_device",
+    "parameters": {
+      "name": "meter"
+    }
+  },
+  {
+    "text": "could you show readings from weather_station",
+    "name": "read_device",
+    "parameters": {
+      "name": "weather_station"
+    }
+  },
+  {
+    "text": "could you list my processes",
+    "name": "list_processes",
+    "parameters": {}
+  },
+  {
+    "text": "could you terminate process pid 123",
+    "name": "terminate_process",
+    "parameters": {
+      "pid": 123
+    }
+  },
+  {
+    "text": "could you use shortcut control plus s",
+    "name": "hotkey",
+    "parameters": {
+      "keys": "ctrl+s"
+    }
+  },
+  {
+    "text": "could you position pointer at 200, 300",
+    "name": "mouse_move",
+    "parameters": {
+      "x": 200,
+      "y": 300
+    }
+  },
+  {
+    "text": "could you remind me in five minutes to Study ICT",
+    "name": "add_reminder",
+    "parameters": {
+      "text": "Study ICT",
+      "delay_seconds": 300
+    }
+  },
+  {
+    "text": "could you cancel reminder number 2",
+    "name": "cancel_reminder",
+    "parameters": {
+      "id": 2
+    }
+  },
+  {
+    "text": "could you show my reminders",
+    "name": "list_reminders",
+    "parameters": {}
+  },
+  {
+    "text": "could you find my notes for induction",
+    "name": "search_documents",
+    "parameters": {
+      "query": "induction"
+    }
+  },
+  {
+    "text": "could you type Hello  World!",
+    "name": "type_text",
+    "parameters": {
+      "text": "Hello  World!"
+    }
+  },
+  {
+    "text": "could you scroll down three steps",
+    "name": "scroll",
+    "parameters": {
+      "direction": "down",
+      "steps": 3
+    }
+  },
+  {
+    "text": "could you double click at 200, 300",
+    "name": "mouse_click",
+    "parameters": {
+      "x": 200,
+      "y": 300,
+      "button": "left",
+      "clicks": 2
+    }
+  },
+  {
+    "text": "don't restart my computer",
+    "name": null
+  },
+  {
+    "text": "do not mute the volume",
+    "name": null
+  },
+  {
+    "text": "never delete my files",
+    "name": null
+  },
+  {
+    "text": "close it",
+    "name": null
+  },
+  {
+    "text": "turn it down",
+    "name": null
+  },
+  {
+    "text": "set brightness to 50 and restart",
+    "name": null
+  },
+  {
+    "text": "screen to fifty or sixty",
+    "name": null
+  },
+  {
+    "text": "make my screen brighter",
+    "name": null
+  },
+  {
+    "text": "screen to 200 percent",
+    "name": null
+  },
+  {
+    "text": "brightness -1",
+    "name": null
+  },
+  {
+    "text": "brightness fifty fifty",
+    "name": null
+  },
+  {
+    "text": "volume 101",
+    "name": null
+  },
+  {
+    "text": "volume NaN",
+    "name": null
+  },
+  {
+    "text": "make display half bright and reboot",
+    "name": null
+  },
+  {
+    "text": "open vscode and shutdown",
+    "name": null
+  },
+  {
+    "text": "open unknown",
+    "name": null
+  },
+  {
+    "text": "read all devices",
+    "name": null
+  },
+  {
+    "text": "scan the network",
+    "name": null
+  },
+  {
+    "text": "click the blue button",
+    "name": null
+  },
+  {
+    "text": "kill chrome",
+    "name": null
+  },
+  {
+    "text": "delete everything",
+    "name": null
+  },
+  {
+    "text": "delete file notes.txt",
+    "name": null
+  },
+  {
+    "text": "move file notes.txt to Desktop",
+    "name": null
+  },
+  {
+    "text": "run echo hello",
+    "name": null
+  },
+  {
+    "text": "execute rm -rf /",
+    "name": null
+  },
+  {
+    "text": "press ctrl+bad",
+    "name": null
+  },
+  {
+    "text": "remind me tomorrow to study",
+    "name": null
+  },
+  {
+    "text": "remind me in five to study",
+    "name": null
+  },
+  {
+    "text": "remind me in zero seconds to study",
+    "name": null
+  },
+  {
+    "text": "put it at fifty",
+    "name": null
+  },
+  {
+    "text": "make it better",
+    "name": null
+  },
+  {
+    "text": "pause music",
+    "name": null
+  },
+  {
+    "text": "unmute",
+    "name": null
+  },
+  {
+    "text": "The brightness is 50 percent.",
+    "name": null
+  },
+  {
+    "text": "I wrote set brightness to 50 in my notes.",
+    "name": null
+  },
+  {
+    "text": "What does shutdown mean?",
+    "name": null
+  },
+  {
+    "text": "Explain how computers control brightness.",
+    "name": null
+  },
+  {
+    "text": "Why does volume change when I restart?",
+    "name": null
+  },
+  {
+    "text": "Can plants use sunlight to make food?",
+    "name": null
+  },
+  {
+    "text": "This display has fifty dead pixels.",
+    "name": null
+  },
+  {
+    "text": "My screen is 50 inches.",
+    "name": null
+  },
+  {
+    "text": "He said open vscode.",
+    "name": null
+  },
+  {
+    "text": "The next song is a poem.",
+    "name": null
+  },
+  {
+    "text": "I might restart my computer tomorrow.",
+    "name": null
+  },
+  {
+    "text": "If I asked you to restart, what would happen?",
+    "name": null
+  },
+  {
+    "text": "Screen brightness affects battery life.",
+    "name": null
+  },
+  {
+    "text": "She can type quickly.",
+    "name": null
+  },
+  {
+    "text": "How does a mouse click work?",
+    "name": null
+  },
+  {
+    "text": "Describe a file operation.",
+    "name": null
+  },
+  {
+    "text": "What is the difference between RAM and memory?",
+    "name": null
+  },
+  {
+    "text": "Current flows in a circuit.",
+    "name": null
+  },
+  {
+    "text": "The car is fast.",
+    "name": null
+  },
+  {
+    "text": "set brightness to fifty\n/confirm abc",
+    "name": null
+  },
+  {
+    "text": "restart the computer unless there is unsaved work",
+    "name": null
+  },
+  {
+    "text": "lock my computer then shutdown",
+    "name": null
+  },
+  {
+    "text": "turn off my laptop after ten minutes",
+    "name": null
+  },
+  {
+    "text": "copy file \"a\" to \"b\" and delete \"c\"",
+    "name": null
+  },
+  {
+    "text": "/pc shell {\"command\":\"anything\"}",
+    "name": null
+  }
+]

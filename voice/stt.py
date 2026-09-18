@@ -1,6 +1,8 @@
 """Microphone capture with local Vosk or explicitly selected Google recognition."""
 
 import speech_recognition as sr
+import threading
+import uuid
 from config import SETTINGS, VOICE_LANGUAGE
 from voice.offline import OfflineRecognizer
 
@@ -18,6 +20,9 @@ class SpeechToText:
         self.timeout = timeout
         self.phrase_time_limit = phrase_time_limit
         self.microphone = None
+        self.capture_lock = threading.Lock()
+        self.state = 'UNAVAILABLE'
+        self.utterance_id = None
 
         try:
             self.microphone = sr.Microphone()
@@ -26,8 +31,9 @@ class SpeechToText:
                 print("Calibrating microphone for ambient noise... (please stay quiet)")
                 self.recognizer.adjust_for_ambient_noise(source, duration=1.5)
             print("Microphone ready.\n")
-        except Exception as e:
-            print(f"⚠️  Could not initialize microphone: {e}")
+            self.state = 'READY'
+        except Exception:
+            print('Microphone unavailable — text mode remains active.')
             print("Voice input will be disabled. You can still type.\n")
             self.microphone = None
 
@@ -40,29 +46,38 @@ class SpeechToText:
             raise ValueError('Cloud speech recognition is disabled while AI is off. Configure VOICE_BACKEND=vosk for offline microphone commands.')
         return self.recognizer.recognize_google(audio, language=self.language).strip()
 
-    def listen(self) -> str | None:
+    def listen(self, cancel=None) -> str | None:
         """
         Listen from the microphone and return the recognized text.
         Returns None if nothing was understood or an error occurred.
         """
         self.error = None
+        if cancel is not None and cancel.is_set():
+            return None
         if self.microphone is None:
             self.error = 'Microphone unavailable. You can still type.'
             print("Microphone not available.")
             return None
-
+        if not self.capture_lock.acquire(blocking=False):
+            self.error = 'Microphone is already in use by this assistant.'
+            return None
         try:
+            self.state = 'LISTENING'
+            self.utterance_id = uuid.uuid4().hex
             with self.microphone as source:
-                print(f"🎤 Listening... (speak now)")
+                print("Listening... (speak now)")
                 audio = self.recognizer.listen(
                     source,
                     timeout=self.timeout,
                     phrase_time_limit=self.phrase_time_limit,
                 )
 
-            print("Recognizing...")
+            if cancel is not None and cancel.is_set():
+                return None
+            self.state = 'TRANSCRIBING'
             text = self.transcribe(audio)
-            print(f"You said: {text}")
+            if cancel is not None and cancel.is_set():
+                return None
             return text
 
         except sr.WaitTimeoutError:
@@ -79,3 +94,6 @@ class SpeechToText:
             self.error = str(error) if isinstance(error, ValueError) else 'Voice recognition unavailable. Check the local model, microphone and dependencies. No cloud fallback was used.'
             print(self.error)
             return None
+        finally:
+            self.state = 'READY' if self.microphone else 'UNAVAILABLE'
+            self.capture_lock.release()

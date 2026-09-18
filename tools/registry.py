@@ -10,6 +10,12 @@ from tools.commands import calculate
 from tools.computer_specs import COMPUTER_TOOLS, COMPUTER_NAMES
 from integrations.computer import ComputerControl, INPUT_ACTIONS
 from integrations.workspace import WorkspaceFiles
+from capabilities.registry import CapabilityRegistry
+from intelligence.intents import Intent
+from audit import AuditLog
+from devices import DeviceManager
+from security.secrets import reject_credentials
+from security.execution import ExecutionDeadline, bound_deadline
 
 
 def tool(name, description, properties=None, required=None, mutation=False):
@@ -51,7 +57,7 @@ TOOLS += COMPUTER_TOOLS
 
 
 class ToolRegistry:
-    def __init__(self, store, memory, apps=None, devices=None, roots=None):
+    def __init__(self, store, memory, apps=None, devices=None, roots=None, settings=None):
         self.store, self.memory = store, memory
         self.apps, self.devices, self.roots = apps or {}, devices or {}, roots or []
         self.pending = {}
@@ -59,30 +65,54 @@ class ToolRegistry:
         self.specs = {spec['name']: spec for spec in TOOLS}
         self.computer = ComputerControl()
         self.files = WorkspaceFiles(self.roots)
+        self.capabilities = CapabilityRegistry(TOOLS, self._run, COMPUTER_NAMES)
+        self.device_manager = DeviceManager(self, lambda name, devices: read_device(name, devices))
+        self._permit = object()
+        self.audit_error = None
+        self.audit_log = None
+        try:
+            self.audit_log = AuditLog(store, getattr(settings, 'audit_retention_days', 30),
+                                     getattr(settings, 'audit_max_rows', 10000))
+        except Exception:
+            self.audit_error = 'Audit storage unavailable.'
 
     def schemas(self):
         return [{k: v for k, v in spec.items() if k != 'mutation'} for spec in TOOLS]
 
     def _validate(self, name, arguments):
-        if name not in self.specs or not isinstance(arguments, dict):
-            raise ValueError('Unknown tool or invalid arguments.')
-        schema = self.specs[name]['parameters']
-        if set(arguments) - set(schema['properties']) or set(schema['required']) - set(arguments):
-            raise ValueError('Unexpected or missing arguments.')
-        for key, value in arguments.items():
-            rule = schema['properties'][key]
-            expected = rule['type']
-            if expected == 'integer' and (type(value) is not int or not rule.get('minimum', 0) <= value <= rule.get('maximum', 2**63 - 1)):
-                raise ValueError(f'Invalid integer for {key}. Check its supported range.')
-            if expected == 'string' and (not isinstance(value, str) or not value.strip() or '\x00' in value or len(value) > rule.get('maxLength', 2000)):
-                raise ValueError(f'Invalid text for {key}. Check its length and contents.')
-            if 'enum' in rule and value not in rule['enum']:
-                raise ValueError(f'Unsupported {key}. Choose one of: ' + ', '.join(rule['enum']))
+        self.capabilities.validate(name, arguments)
+        if name == 'remember':
+            self.memory.structured.validate('conversation_facts', arguments['key'], arguments['value'])
+        if name == 'type_text':
+            reject_credentials('', arguments['text'])
+        if name == 'add_reminder':
+            if not 1 <= arguments['delay_seconds'] <= 31536000 or (
+                    arguments.get('repeat_seconds', 0) != 0 and not 60 <= arguments['repeat_seconds'] <= 31536000):
+                raise ValueError('Invalid reminder interval. Delay: 1–31536000; repeat: 0 or 60–31536000 seconds.')
+        if name == 'open_app' and arguments['name'] not in self.apps:
+            raise ValueError('Unknown app alias. Configure it in JARVIS_APPS_JSON first.')
+        if name == 'read_device':
+            self.device_manager.resolve_name(arguments['name'])
 
-    def execute(self, name, arguments, trusted_user=False, _approved=None, _session=None):
+    def record(self, action, status, **metadata):
+        try:
+            if self.audit_log:
+                self.audit_log.record(action, status, **metadata)
+        except Exception:
+            self.audit_error = 'Audit storage unavailable.'
+
+    def execute_intent(self, intent):
+        return self.execute(intent.name, intent.arguments, _intent=intent)
+
+    def execute(self, name, arguments, trusted_user=False, _approved=None, _session=None,
+                _intent=None, _permit=None):
+        started = time.monotonic()
+        intent = None
         try:
             with self.lock:
                 self._validate(name, arguments)
+                intent = self.capabilities.normalize(_intent or Intent(name, arguments))
+                capability = self.capabilities.actions[name]
                 prepared = None
                 session = _session or self.computer._session
                 if name in COMPUTER_NAMES and name != 'computer_status':
@@ -91,15 +121,16 @@ class ToolRegistry:
                         prepared = self.files.prepare(name, arguments)
                     else:
                         prepared = self.computer.prepare(name, arguments)
-                    if trusted_user and self.specs[name]['mutation'] and _approved is None:
-                        raise ValueError('Device actions require a single-use confirmation token.')
-                if self.specs[name]['mutation'] and not trusted_user:
+                if capability.confirmation_required and trusted_user and _permit is not self._permit:
+                    raise ValueError('Device actions require a single-use confirmation token.')
+                if capability.confirmation_required and not trusted_user:
                     self.pending = {k: v for k, v in self.pending.items() if v[0] > time.monotonic()}
                     if len(self.pending) >= 10:
                         raise ValueError('Too many pending actions. Confirm or cancel existing actions first.')
                     token = secrets.token_hex(4)
-                    self.pending[token] = (time.monotonic()+300, name, dict(arguments), prepared, session)
+                    self.pending[token] = (time.monotonic()+300, name, dict(arguments), prepared, session, intent)
                     self.memory.audit(name, 'awaiting confirmation')
+                    self.record(name, 'pending', mode=intent.processing_mode, risk=intent.risk.value)
                     note = ''
                     if name in INPUT_ACTIONS:
                         note = ' After confirmation, focus the target app within four seconds. Input goes to that app; move the mouse to a screen corner to stop.'
@@ -111,16 +142,32 @@ class ToolRegistry:
                             'instruction': f'User must enter /confirm {token} or /cancel {token}. Nothing has run.' + note}
             # Never hold the approval lock while waiting on a desktop action: Stop must stay responsive.
             self.memory.audit(name, 'started')
-            result = self._run(name, arguments, _approved, session)
+            self.record(name, 'started', mode=intent.processing_mode, risk=intent.risk.value, confirmed=trusted_user)
+            deadline = ExecutionDeadline(capability.timeout_seconds,
+                session if name in COMPUTER_NAMES - {'computer_status'} else None)
+            deadline.check()
+            if name == 'remember':
+                result = self.memory.remember(arguments['key'], arguments['value'], source=intent.source)
+            else:
+                with bound_deadline(deadline):
+                    result = capability.handler(arguments, _approved, session)
+            deadline.check()
+            self.record(name, 'success', mode=intent.processing_mode, risk=intent.risk.value,
+                        confirmed=trusted_user, parameters=arguments, duration_ms=(time.monotonic()-started)*1000)
             try:
                 self.memory.audit(name, 'completed')
             except Exception:
                 return {'status': 'ok', 'result': result, 'note': 'Action ran, but its completion could not be written to the activity log. Do not retry solely for this warning.'}
-            return {'status': 'ok', 'result': result}
+            return {'status': 'ok', 'result': result,
+                    **({'note': self.memory.retrieval_notice} if name == 'search_documents' and self.memory.retrieval_notice else {})}
         except Exception as error:
             # Known input errors are useful; SDK/network exceptions may include secrets/paths.
-            try: self.memory.audit(name if name in self.specs else 'unknown_tool', 'failed')
+            safe_name = name if isinstance(name, str) and name in self.specs else 'unknown_tool'
+            try: self.memory.audit(safe_name, 'failed')
             except Exception: pass
+            self.record(safe_name, 'failed',
+                        mode=intent.processing_mode if intent else 'LOCAL',
+                        risk=intent.risk.value if intent else 'READ_ONLY')
             detail = str(error) if isinstance(error, ValueError) else 'Integration unavailable. Check installation, connection and local configuration. If an action started, check its result before retrying.'
             return {'status': 'error', 'error': detail}
 
@@ -129,8 +176,9 @@ class ToolRegistry:
             proposal = self.pending.pop(token, None)
             if proposal is None or proposal[0] <= time.monotonic():
                 return {'status': 'error', 'error': 'Approval expired or not found. Ask again.'}
-            _, name, arguments, prepared, session = proposal
-        return self.execute(name, arguments, trusted_user=True, _approved=prepared, _session=session)
+            _, name, arguments, prepared, session, intent = proposal
+        return self.execute(name, arguments, trusted_user=True, _approved=prepared, _session=session,
+                            _intent=intent, _permit=self._permit)
 
     def stop(self):
         self.computer.stop()
@@ -150,9 +198,13 @@ class ToolRegistry:
     def cancel(self, token=None):
         with self.lock:
             if token:
-                self.pending.pop(token, None)
+                removed = [self.pending.pop(token, None)]
             else:
+                removed = list(self.pending.values())
                 self.pending.clear()
+            for proposal in removed:
+                if proposal:
+                    self.record(proposal[1], 'cancelled')
         return 'Pending action cancelled.'
 
     def _run(self, name, a, approved=None, session=None):
@@ -177,7 +229,7 @@ class ToolRegistry:
         if name == 'cancel_reminder': return self.memory.cancel_reminder(a['id'])
         if name == 'open_app': return open_app(a['name'], self.apps)
         if name == 'find_files': return find_files(a['query'], self.roots)
-        if name == 'read_device': return read_device(a['name'], self.devices)
+        if name == 'read_device': return self.device_manager.read(a['name'])
         raise ValueError('Tool not implemented.')
 
 
