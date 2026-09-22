@@ -8,7 +8,8 @@ from integrations.desktop import find_files, open_app
 from integrations.network import read_device, web_search
 from tools.commands import calculate
 from tools.computer_specs import COMPUTER_TOOLS, COMPUTER_NAMES
-from integrations.computer import ComputerControl, INPUT_ACTIONS
+from integrations.computer import INPUT_ACTIONS
+from platforms import DesktopPlatform
 from integrations.workspace import WorkspaceFiles
 from capabilities.registry import CapabilityRegistry
 from intelligence.intents import Intent
@@ -57,15 +58,19 @@ TOOLS += COMPUTER_TOOLS
 
 
 class ToolRegistry:
-    def __init__(self, store, memory, apps=None, devices=None, roots=None, settings=None):
+    def __init__(self, store, memory, apps=None, devices=None, roots=None, settings=None,
+                 platform_backend=None):
         self.store, self.memory = store, memory
         self.apps, self.devices, self.roots = apps or {}, devices or {}, roots or []
         self.pending = {}
         self.lock = threading.RLock()
-        self.specs = {spec['name']: spec for spec in TOOLS}
-        self.computer = ComputerControl()
+        self.platform = platform_backend or DesktopPlatform()
+        self.specs = {spec['name']: spec for spec in self.platform.tool_specs(TOOLS)}
+        self.computer = self.platform.computer
+        self.control_names = self.platform.control_names
         self.files = WorkspaceFiles(self.roots)
-        self.capabilities = CapabilityRegistry(TOOLS, self._run, COMPUTER_NAMES)
+        self.capabilities = CapabilityRegistry(list(self.specs.values()), self._run,
+            self.platform.desktop_os_names)
         self.device_manager = DeviceManager(self, lambda name, devices: read_device(name, devices))
         self._permit = object()
         self.audit_error = None
@@ -77,7 +82,7 @@ class ToolRegistry:
             self.audit_error = 'Audit storage unavailable.'
 
     def schemas(self):
-        return [{k: v for k, v in spec.items() if k != 'mutation'} for spec in TOOLS]
+        return [{k: v for k, v in spec.items() if k != 'mutation'} for spec in self.specs.values()]
 
     def _validate(self, name, arguments):
         self.capabilities.validate(name, arguments)
@@ -115,7 +120,7 @@ class ToolRegistry:
                 capability = self.capabilities.actions[name]
                 prepared = None
                 session = _session or self.computer._session
-                if name in COMPUTER_NAMES and name != 'computer_status':
+                if name in self.control_names and name != 'computer_status':
                     self.computer.check(session)
                     if name in {'manage_file', 'open_path', 'list_folder'}:
                         prepared = self.files.prepare(name, arguments)
@@ -144,7 +149,7 @@ class ToolRegistry:
             self.memory.audit(name, 'started')
             self.record(name, 'started', mode=intent.processing_mode, risk=intent.risk.value, confirmed=trusted_user)
             deadline = ExecutionDeadline(capability.timeout_seconds,
-                session if name in COMPUTER_NAMES - {'computer_status'} else None)
+                session if name in self.control_names - {'computer_status'} else None)
             deadline.check()
             if name == 'remember':
                 result = self.memory.remember(arguments['key'], arguments['value'], source=intent.source)
@@ -208,6 +213,8 @@ class ToolRegistry:
         return 'Pending action cancelled.'
 
     def _run(self, name, a, approved=None, session=None):
+        if self.platform.handles(name):
+            return self.platform.run(name, a, approved, session)
         if name == 'computer_status': return self.computer.status()
         if name in {'manage_file', 'open_path', 'list_folder'}:
             return self.files.run(name, a, approved, lambda: self.computer.check(session))

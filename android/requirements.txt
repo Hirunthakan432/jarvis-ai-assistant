@@ -1,0 +1,7 @@
+# Pure Python dependencies only: works with Python 3.13 and 16 KB page devices.
+python-dotenv==1.2.1
+requests==2.32.5
+certifi==2026.2.25
+charset-normalizer==3.4.4
+idna==3.11
+urllib3==2.6.3

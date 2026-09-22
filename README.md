@@ -363,3 +363,13 @@ Implementation references: [DDGS](https://github.com/deedy5/ddgs),
 [Claude tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools),
 [pypdf text extraction](https://pypdf.readthedocs.io/en/stable/user/extract-text.html),
 [Ollama compatibility](https://docs.ollama.com/api/openai-compatibility).
+
+## Android
+
+A native Android app embeds the existing local-first Python core, with Android-only
+capabilities behind an injected platform backend. Windows/Linux GUI, CLI and installer
+targets remain available. Android starts with AI off and requires per-action confirmation.
+
+See [Android setup, APK builds, security, supported commands and limitations](docs/ANDROID.md).
+Build with `cd android && ./gradlew assembleDebug` (JDK 17, Python 3.13, Android SDK 36).
+Release APKs must be signed externally before distribution.

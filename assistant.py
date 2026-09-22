@@ -21,9 +21,11 @@ from voice.guard import VoiceCommandGuard
 
 class JarvisAssistant:
     def __init__(self, memory_path=None, settings: Settings = SETTINGS,
-                 provider: LLMProvider | None = None):
+                 provider: LLMProvider | None = None, platform_backend=None,
+                 provider_factory=None):
         self._lock = threading.RLock()
         self.settings = settings
+        self._provider_factory = provider_factory or create_provider
         self.store = MemoryStore(memory_path or settings.memory_path)
         self.conversation = Conversation(settings.system_prompt, 2 * settings.max_history_turns)
         history = self.store.history(settings.max_history_turns)
@@ -32,7 +34,8 @@ class JarvisAssistant:
         self.memory = AdvancedMemory(self.store, embedding_backend=settings.embedding_backend,
                                      embedding_model_path=settings.embedding_model_path)
         self.tools = ToolRegistry(self.store, self.memory, json.loads(settings.apps_json),
-                                  json.loads(settings.devices_json), json.loads(settings.file_roots_json), settings)
+                                  json.loads(settings.devices_json), json.loads(settings.file_roots_json), settings,
+                                  platform_backend=platform_backend)
         self.language = settings.reply_language
         self.last_action = ''
         self.local = LocalCommands(self.store, self.tools, settings.assistant_name)
@@ -56,7 +59,7 @@ class JarvisAssistant:
         if not self.ai_enabled:
             return None
         if not self._provider_attempted:
-            self.provider = create_provider(self.settings)
+            self.provider = self._provider_factory(self.settings)
             self._provider_attempted = True
         return self.provider
 
@@ -65,13 +68,13 @@ class JarvisAssistant:
             if self.settings.llm_provider == 'ollama':
                 return self._ensure_provider()
             if self._local_provider is None:
-                self._local_provider = create_provider(replace(self.settings, llm_provider='ollama', model=self.settings.ollama_model))
+                self._local_provider = self._provider_factory(replace(self.settings, llm_provider='ollama', model=self.settings.ollama_model))
             return self._local_provider
         if self.settings.llm_provider != 'ollama':
             return self._ensure_provider()
         if self._cloud_provider is None:
             name = self.settings.cloud_provider
-            self._cloud_provider = create_provider(replace(self.settings, llm_provider=name,
+            self._cloud_provider = self._provider_factory(replace(self.settings, llm_provider=name,
                 model=self.settings.cloud_model or MODEL_DEFAULTS[name]))
         return self._cloud_provider
 
@@ -171,6 +174,9 @@ class JarvisAssistant:
     def _advanced_command(self, message):
         pieces = message.split(maxsplit=1)
         command, argument = pieces[0].lower(), pieces[1].strip() if len(pieces) > 1 else ''
+        platform_reply = self.tools.platform.command(self, command, argument)
+        if platform_reply is not None:
+            return platform_reply
         from core.local_admin import local_admin
         result = local_admin(self, command, argument)
         if result is not None:

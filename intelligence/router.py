@@ -15,6 +15,9 @@ class IntentRouter:
         error = None
         if self.deterministic:
             try:
+                action = self.registry.platform.resolve(text)
+                if action:
+                    return self._intent(action, 'deterministic', 1.0)
                 action = natural_action(text, self.registry.apps)
                 if action:
                     self.local._validate(action)
