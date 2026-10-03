@@ -1,0 +1,82 @@
+name: Build Android APK (Kivy)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-kivy]
+    paths:
+      - 'android/**'
+      - '.github/workflows/build-android-apk.yml'
+      - 'assistant.py'
+      - 'config.py'
+      - 'providers.py'
+      - 'core/**'
+      - 'memory/**'
+      - 'intelligence/**'
+      - 'tools/**'
+      - 'integrations/**'
+      - 'voice/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip openjdk-17-jdk \
+            python3-pip autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake libffi-dev libssl-dev
+
+      - name: Install Buildozer & Cython
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install buildozer cython
+
+      - name: Prepare android source tree
+        run: |
+          # Buildozer expects the app code inside android/.
+          # We also need the core modules available, so we copy the necessary
+          # top-level packages into android/ so they are packaged.
+          cd android
+          for d in core memory intelligence tools integrations voice capabilities devices retrieval security audit diagnostics; do
+            if [ -d "../$d" ]; then
+              cp -a "../$d" .
+            fi
+          done
+          for f in assistant.py config.py providers.py main.py requirements.txt; do
+            if [ -f "../$f" ]; then
+              cp "../$f" .
+            fi
+          done
+          # Ensure the mobile entry point is named main.py (already present)
+          ls -la
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          buildozer android debug
+        env:
+          BUILDOZER_WARN_ON_ROOT: "0"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jarvis-Android-APK
+          path: android/bin/*.apk
+          if-no-files-found: error
+          retention-days: 30
