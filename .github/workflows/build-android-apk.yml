@@ -23,7 +23,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +33,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -40,36 +46,41 @@ jobs:
             git zip unzip openjdk-17-jdk \
             python3-pip autoconf libtool pkg-config \
             zlib1g-dev libncurses5-dev libncursesw5-dev \
-            libtinfo5 cmake libffi-dev libssl-dev
+            libtinfo5 cmake libffi-dev libssl-dev \
+            libltdl-dev
 
       - name: Install Buildozer & Cython
         run: |
           python -m pip install --upgrade pip
-          python -m pip install buildozer cython
+          python -m pip install "buildozer==1.5.0" "cython<3.0"
 
       - name: Prepare android source tree
         run: |
-          # Buildozer expects the app code inside android/.
-          # We also need the core modules available, so we copy the necessary
-          # top-level packages into android/ so they are packaged.
           cd android
           for d in core memory intelligence tools integrations voice capabilities devices retrieval security audit diagnostics; do
             if [ -d "../$d" ]; then
               cp -a "../$d" .
             fi
           done
-          for f in assistant.py config.py providers.py main.py requirements.txt; do
+          for f in assistant.py config.py providers.py requirements.txt; do
             if [ -f "../$f" ]; then
               cp "../$f" .
             fi
           done
-          # Ensure the mobile entry point is named main.py (already present)
           ls -la
+
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir -p $HOME/.android
+          touch $HOME/.android/repositories.cfg
+          # Accept licenses non-interactively (works with both system and buildozer-managed SDK)
+          yes | sdkmanager --licenses || true
 
       - name: Build debug APK
         working-directory: android
         run: |
-          buildozer android debug
+          # Pipe yes so any remaining license prompts during first-time SDK download are accepted
+          yes | buildozer android debug
         env:
           BUILDOZER_WARN_ON_ROOT: "0"
 
