@@ -7,15 +7,6 @@ on:
     paths:
       - 'android/**'
       - '.github/workflows/build-android-apk.yml'
-      - 'assistant.py'
-      - 'config.py'
-      - 'providers.py'
-      - 'core/**'
-      - 'memory/**'
-      - 'intelligence/**'
-      - 'tools/**'
-      - 'integrations/**'
-      - 'voice/**'
 
 permissions:
   contents: read
@@ -73,14 +64,16 @@ jobs:
         run: |
           mkdir -p $HOME/.android
           touch $HOME/.android/repositories.cfg
-          # Accept licenses non-interactively (works with both system and buildozer-managed SDK)
-          yes | sdkmanager --licenses || true
+          # Non-interactive license acceptance
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          # Also write the standard accepted marker files if present
+          if [ -d "$ANDROID_HOME/licenses" ]; then
+            echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license" || true
+          fi
 
       - name: Build debug APK
         working-directory: android
-        run: |
-          # Pipe yes so any remaining license prompts during first-time SDK download are accepted
-          yes | buildozer android debug
+        run: buildozer android debug
         env:
           BUILDOZER_WARN_ON_ROOT: "0"
 
