@@ -22,8 +22,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      # Avoid the obsolete 'tools' package; install only what the build needs.
       - uses: android-actions/setup-android@v3
-      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+        with:
+          packages: ''
+      - name: Accept licenses and install SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install \
+            'platforms;android-36' \
+            'build-tools;36.0.0' \
+            'platform-tools'
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
@@ -54,7 +63,16 @@ jobs:
         with:
           python-version: '3.13'
       - uses: android-actions/setup-android@v3
-      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+        with:
+          packages: ''
+      - name: Accept licenses and install SDK + system images
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install \
+            'platforms;android-36' \
+            'build-tools;36.0.0' \
+            'platform-tools' \
+            "system-images;android-${{ matrix.api }};default;x86_64"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'

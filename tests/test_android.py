@@ -172,7 +172,11 @@ class AndroidTests(unittest.TestCase):
         self.assertEqual(runtime.bot.policy.mode, 'LOCAL_ONLY')
         self.assertEqual(runtime.bot.tools.devices, {})
         self.assertIsNone(runtime.bot.settings.openai_api_key)
-        self.assertIn(self.temp.name, runtime.bot.settings.memory_path)
+        # Resolve both sides so Windows short (8.3) temp paths match Path.resolve().
+        resolved_temp = str(Path(self.temp.name).resolve())
+        resolved_memory = str(Path(runtime.bot.settings.memory_path).resolve())
+        self.assertTrue(resolved_memory.startswith(resolved_temp),
+                        f'{resolved_memory!r} does not start with {resolved_temp!r}')
         self.assertIn('battery_info', json.loads(runtime.chat('battery status'))['reply'])
         self.assertEqual(self.bridge.requests, [])
 
