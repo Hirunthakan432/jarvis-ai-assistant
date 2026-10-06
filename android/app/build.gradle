@@ -1,0 +1,65 @@
+plugins {
+    id 'com.android.application'
+    id 'com.chaquo.python'
+}
+android {
+    namespace 'com.hirunthakan.jarvis'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        applicationId 'com.hirunthakan.jarvis'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '1.4.0-android'
+        ndk { abiFilters 'arm64-v8a', 'x86_64' }
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Release signing is performed externally; no keys/passwords in source.
+        }
+    }
+    testOptions { unitTests.includeAndroidResources = true }
+    lint { abortOnError true }
+}
+// Stage only an explicit source allowlist. Never package .env, databases, tests,
+// build artifacts or desktop GUI/voice dependencies from the repository root.
+def pythonSources = layout.buildDirectory.dir('generated/jarvisPython')
+def stagePython = tasks.register('stageJarvisPython', Sync) {
+    from('../..') {
+        include 'assistant.py', 'config.py', 'providers.py'
+        include 'core/**/*.py', 'memory/**/*.py', 'tools/**/*.py', 'integrations/**/*.py'
+        include 'intelligence/**/*.py', 'capabilities/**/*.py', 'devices/**/*.py'
+        include 'retrieval/**/*.py', 'security/**/*.py', 'diagnostics/**/*.py', 'audit/**/*.py'
+        include 'platforms/**/*.py', 'mobile/**/*.py', 'voice/__init__.py', 'voice/guard.py'
+        exclude '**/__pycache__/**'
+    }
+    into pythonSources
+}
+chaquopy {
+    defaultConfig {
+        version = '3.13'
+        pip { install '-r', file('../requirements.txt').absolutePath }
+    }
+    sourceSets { main { srcDir pythonSources } }
+}
+// Chaquopy's source task must see the staged tree during task execution.
+tasks.configureEach {
+    if (name.contains('Python') && name != 'stageJarvisPython') dependsOn stagePython
+}
+dependencies {
+    implementation 'androidx.activity:activity:1.10.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.8.7'
+    implementation 'androidx.work:work-runtime:2.10.1'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.14.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+}
